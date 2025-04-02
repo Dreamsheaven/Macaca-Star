@@ -1,0 +1,18 @@
+subject_dir: '/media/dell/data2_zjLab/macaque/zzb/12.3/C060/'
+resolution: 0.05
+MRI_oc_bymetrix: False
+bias_value:  '4' # use to make mask 2,3,4
+clahe: False
+clip_limit: (0.5,2.0)
+tile_grid_size: (8, 8)
+remove_artifact: 'GFP'  #fft  #GFP #adaptive_rm
+resample_by_affine: False
+normal_log: False  #logN if N>threshold
+rm_background_threshold: 10  #rm the background of image
+remove_edge_light: True #rm highlight in brain edge
+remove_edge_light_length: 35   #pi 20
+callosum_rc_length: 26
+cutoff_callosum: False #rm callosum
+cutoff_callosum_length: 19
+T1PI_correction: True
+
