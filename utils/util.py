@@ -1,0 +1,382 @@
+#!/usr/bin/env python
+# -*- coding: UTF-8 -*-
+"""
+@Project ：Macaca-Star
+@File    ：util.py
+@Author  ：Zauber
+@Date    ：2024/6/3
+"""
+import os
+import numpy as np
+import ants
+import scipy
+import tifffile
+import yaml
+from matplotlib import pyplot as plt
+import utils.Logger as loggerz
+import cv2
+YAML_PATH = os.getcwd() + '/config/fMOST_PI_config.yaml'
+fMOST_PI_CONFIG = yaml.safe_load(open(YAML_PATH, 'r'))
+
+def horizontal():
+    isPlot=False
+    pi = ants.image_read(fMOST_PI_CONFIG['output_dir'] + '/fMOST_PI/PI_8bit.nii.gz')
+    pi_origin=ants.image_clone(pi)
+    pi_origin[:,:,:]=0
+    pi_avg = np.zeros((pi.shape[0], pi.shape[2]))
+    for k in range(0, pi.shape[2]):
+        pi_slice = pi[:, :, k].numpy()
+        for i in range(0, pi_slice.shape[0]):
+            pi_1d = pi_slice[i, :]
+            v5 = np.where(pi_1d > 10)
+            slice_data = pi_1d[v5]
+            # rm low intensity in background and brain
+            if len(slice_data) > 10:
+                percent_upper = np.percentile(slice_data, 95)
+                slice_data = slice_data[slice_data < percent_upper]
+                if len(slice_data) > 10:
+                    percent_lower = np.percentile(slice_data, 10)
+                    slice_data = slice_data[slice_data > percent_lower]
+                if len(slice_data) > 10:
+                    pi_avg[i, k] = np.mean(slice_data)
+                else:
+                    pi_avg[i, k] = 0.0001
+            else:
+                pi_avg[i, k] = 0.0001
+
+    # rm area including a part of cerebellum, as the area intensity is confused
+    pi_avg_ = pi_avg[:, 0:pi_avg.shape[1]]
+    pi_avg_1d = np.zeros((pi_avg.shape[0], 1))
+    for i in range(0, pi_avg.shape[0]):
+        tmp = pi_avg_[i, :]
+        if len(tmp[tmp > 10.0]) > 0:
+            pi_avg_1d[i] = np.mean(tmp[tmp > 10])
+        else:
+            pi_avg_1d[i] = 0
+    peaks, _ = scipy.signal.find_peaks(pi_avg_1d[:, 0], distance=20, height=25, width=10)  ##50
+    # add the first and last point
+    peaks_ = np.insert(peaks, 0, 0)
+    peaks_ = np.append(peaks_, pi_avg.shape[0] - 1)
+    pi_avg_1d=pi_avg_1d[:,0]
+    pi_avg_1d[pi_avg_1d.shape[0] - 1] = pi_avg_1d[peaks_[len(peaks_) - 2] - 2]
+    pi_avg_1d[0] = pi_avg_1d[peaks_[1] - 2]
+    y = pi_avg_1d[peaks_]
+    x = peaks_
+    x_curve, y_curve = smoothing_base_bezier(x, y, k=0.3, closed=False)
+    if isPlot:
+        plt.plot(pi_avg_1d, label='$origin$')
+        plt.legend(loc='best')
+        plt.plot(x, y, 'ro')
+        plt.plot(x_curve, y_curve, label='$k=0.3$')
+        plt.show()
+    pi_avg_1d[pi_avg_1d<=1]=1
+    pi_ratio_tmp=y_curve/pi_avg_1d
+    pi_ratio=np.zeros((pi_avg.shape[0],pi_avg.shape[1]))
+    for k in range(0, pi_avg.shape[1]):
+        pi_ratio[:,k]=pi_ratio_tmp
+    pi_ratio[pi_ratio > 8.0] = 1.0
+    pi_ratio[pi_ratio < 0.01] = 1.0
+    pi_ratio[np.where((pi_ratio >= 0.0) & (pi_ratio < 1.0))] = 1.0
+    pi_ratio[pi_ratio > 8.0] = 1.0
+    pi_ratio[pi_ratio < 0.01] = 1.0
+    pi_data=pi.numpy()
+    for j in range(0, pi.shape[1]):
+        pi_origin[:, j, :] = pi_data[:, j, :] * pi_ratio[:, :]
+    pi_avg=pi_avg.astype(np.float32)
+    pi_ratio = pi_ratio.astype(np.float32)
+    cv2.imwrite(fMOST_PI_CONFIG['output_dir'] + '/fMOST_PI/tmp/PI_avg_h.tif', pi_avg)
+    cv2.imwrite(fMOST_PI_CONFIG['output_dir'] + '/fMOST_PI/tmp/PI_ratio_h.tif', pi_ratio)
+    ants.image_write(pi_origin, fMOST_PI_CONFIG['output_dir'] + '/fMOST_PI/tmp/PI_rm_h.nii.gz')
+
+
+def sagittal():
+    remove_edge_light = True
+    rm_bias = 20
+    rm_value = 10
+    pi_origin = ants.image_read(fMOST_PI_CONFIG['output_dir'] + '/fMOST_PI/tmp/PI_rm_h.nii.gz')
+    pi_origin_data=pi_origin.numpy()[:,:,:]
+    pi_origin_data = np.nan_to_num(pi_origin_data)
+    pi_origin_data[pi_origin_data<=0]=0
+    pi_origin[:,:,:]=pi_origin_data
+    pi=pi_origin
+    pi_avg = np.zeros((pi.shape[0], pi.shape[2]))
+    pi_bessel = np.zeros((pi.shape[0], pi.shape[2]))
+    for i in range(0, pi.shape[0]):
+
+        pi_slice = pi[i, :, :].numpy().copy()
+
+        for k in range(0, pi_slice.shape[1]):
+            pi_1d = pi_slice[:, k]
+            v5 = np.where(pi_1d > rm_value)
+            slice_data = pi_1d[v5]
+
+            if len(slice_data) > 10:
+                percent_upper = np.percentile(slice_data, 95)
+                slice_data = slice_data[slice_data < percent_upper]
+                if len(slice_data) > 10:
+                    percent_lower = np.percentile(slice_data, 85)
+                    slice_data = slice_data[slice_data > percent_lower]
+                else:
+                    pi_avg[i, k] = 1
+                if len(slice_data) > 10:
+                    pi_avg[i, k] = np.average(slice_data)
+                else:
+                    pi_avg[i, k] = 1
+            else:
+                pi_avg[i, k] = 1
+
+    pi_avg_1d = np.zeros((1, pi_avg.shape[1]))
+    for k in range(0, pi_avg.shape[1]):
+        tmp = pi_avg[:, k]
+        if len(tmp[tmp > 10.0]) > 5:
+            pi_avg_1d[0, k] = np.mean(tmp[tmp > 10.0])
+        else:
+            pi_avg_1d[0, k] = 0.0
+
+    # plt.plot(pi_avg_1d, label='pi_avg_1d')
+    peaks, _ = scipy.signal.find_peaks(pi_avg_1d[0, :], distance=10, height=50, width=5)
+    if len(peaks) > 10:
+        center_peaks_y = int(len(peaks) / 2)
+        dis = 0
+        for p in range(center_peaks_y - 5, center_peaks_y + 5):
+            dis = dis + peaks[p] - peaks[p - 1]
+        dis = int(dis / 10)
+        print('dis y: ' + str(dis))
+        peaks_ = peaks_restore(peaks, dis, 0, 0)
+        peaks_ = peaks_restore(peaks_, dis, pi_avg_1d.shape[1], 1)
+    else:
+        peaks_ = peaks
+    for i in range(0, pi_avg.shape[0]):
+        slice_avg = pi_avg[i, :]
+
+        tmp = pi_avg[:, peaks_[1]]
+        t = np.mean(tmp[tmp > 10]) - np.std(tmp[tmp > 10])
+        if slice_avg[peaks_[1]] - t < 0:
+            for p in range(2, len(peaks_)):
+                tmp = pi_avg[:, peaks_[p]]
+                t = np.mean(tmp[tmp > 10]) - np.std(tmp[tmp > 10])
+                if slice_avg[peaks_[p]] - t < 0:
+                    slice_avg[peaks_[p - 1]] = slice_avg[peaks_[p]] - 10
+                    break
+
+        tmp = pi_avg[:, peaks_[len(peaks_) - 2]]
+        t = np.mean(tmp[tmp > 10]) - np.std(tmp[tmp > 10])
+        if slice_avg[peaks_[len(peaks_) - 2]] - t < 0:
+            for p in range(3, len(peaks_)):
+                tmp = pi_avg[:, peaks_[len(peaks_) - p]]
+                t = np.mean(tmp[tmp > 10]) - np.std(tmp[tmp > 10])
+                if slice_avg[peaks_[len(peaks_) - p]] - t < 0:
+                    slice_avg[peaks_[len(peaks_) - p + 1]] = slice_avg[peaks_[len(peaks_) - p]] - 10
+                    break
+
+        y = slice_avg[peaks_]
+
+        x = peaks_
+        x_curve, y_curve = smoothing_base_bezier(x, y, k=0.3, closed=False)
+        pi_bessel[i, :] = y_curve
+        print('i: ' + str(i) + '  ' + str(pi_avg.shape[0]))
+
+    pi_ratio = pi_bessel / pi_avg
+    pi_ratio[pi_avg < 5] = 1
+    pi_ratio[pi_ratio > 5] = 1.0
+    # pi_ratio[pi_ratio < 0] = 1
+
+    if remove_edge_light:
+        for k in range(0, pi_ratio.shape[1]):
+            for i in range(pi_ratio.shape[0] - 1, 0, -1):
+                tmp = pi_ratio[i - rm_bias:i, k]
+                if len(tmp[tmp > 1.010000]) / rm_bias >= 0.80:
+                    pi_ratio[i - rm_bias:pi_ratio.shape[0], k] = pi_ratio[i - rm_bias, k]
+                    break
+    print('ratio correction end')
+
+    pi_ratio[pi_avg < 5] = 1
+    pi_ratio[pi_ratio > 5] = 1
+    pi_ratio[pi_ratio < 0] = 1
+    pi_ratio[np.where((pi_ratio >= 0.0) & (pi_ratio < 1.0))] = 1.0
+
+    for j in range(0, pi.shape[1]):
+        pi[:, j, :] = pi_origin[:, j, :].numpy().copy() * pi_ratio[:, :]
+    pi_avg=pi_avg.astype(np.float32)
+    pi_ratio = pi_ratio.astype(np.float32)
+    tifffile.imwrite(fMOST_PI_CONFIG['output_dir'] + '/fMOST_PI/tmp/PI_avg_s.tif', pi_avg)
+    tifffile.imwrite(fMOST_PI_CONFIG['output_dir'] + '/fMOST_PI/tmp/PI_ratio_s.tif', pi_ratio)
+    ants.image_write(pi, fMOST_PI_CONFIG['output_dir'] + '/fMOST_PI/PI_8bit_rm.nii.gz')
+
+
+def peaks_restore(peaks, dis, se, status):
+    if status == 0:
+        peaks[3] = peaks[4] - dis
+        peaks[2] = peaks[3] - dis
+        peaks[1] = peaks[2] - dis
+        peaks[0] = peaks[1] - dis
+        n_peaks = int(peaks[0] / dis)
+        for p in range(0, n_peaks):
+            peaks = np.insert(peaks, 0, peaks[0] - dis)
+        if peaks[0] > 0:
+            peaks = np.insert(peaks, 0, 0)
+    elif status == 1:
+        peaks[len(peaks) - 4] = peaks[len(peaks) - 5] + dis
+        peaks[len(peaks) - 3] = peaks[len(peaks) - 4] + dis
+        peaks[len(peaks) - 2] = peaks[len(peaks) - 3] + dis
+        peaks[len(peaks) - 1] = peaks[len(peaks) - 2] + dis
+        n_peaks = int((se - 1 - peaks[len(peaks) - 1]) / dis)
+        for p in range(0, n_peaks):
+            peaks = np.append(peaks, peaks[len(peaks) - 1] + dis)
+        if peaks[len(peaks) - 1] < se - 1:
+            peaks = np.append(peaks, se - 1)
+    return peaks
+
+
+def bezier_curve(p0, p1, p2, p3, inserted):
+    """
+    三阶贝塞尔曲线
+
+    p0, p1, p2, p3 - 点坐标，tuple、list或numpy.ndarray类型
+    inserted  - p0和p3之间插值的数量
+    """
+
+    assert isinstance(p0, (tuple, list, np.ndarray)), u'点坐标不是期望的元组、列表或numpy数组类型'
+    assert isinstance(p0, (tuple, list, np.ndarray)), u'点坐标不是期望的元组、列表或numpy数组类型'
+    assert isinstance(p0, (tuple, list, np.ndarray)), u'点坐标不是期望的元组、列表或numpy数组类型'
+    assert isinstance(p0, (tuple, list, np.ndarray)), u'点坐标不是期望的元组、列表或numpy数组类型'
+
+    if isinstance(p0, (tuple, list)):
+        p0 = np.array(p0)
+    if isinstance(p1, (tuple, list)):
+        p1 = np.array(p1)
+    if isinstance(p2, (tuple, list)):
+        p2 = np.array(p2)
+    if isinstance(p3, (tuple, list)):
+        p3 = np.array(p3)
+
+    points = list()
+    for t in np.linspace(0, 1, inserted + 2):
+        points.append(p0 * np.power((1 - t), 3) + 3 * p1 * t * np.power((1 - t), 2) + 3 * p2 * (1 - t) * np.power(t,
+                                                                                                                  2) + p3 * np.power(
+            t, 3))
+
+    return np.vstack(points)
+
+def smoothing_base_bezier(date_x, date_y, k=0.5, inserted=10, closed=False):
+    """
+    基于三阶贝塞尔曲线的数据平滑算法
+
+    date_x  - x维度数据集，list或numpy.ndarray类型
+    date_y  - y维度数据集，list或numpy.ndarray类型
+    k   - 调整平滑曲线形状的因子，取值一般在0.2~0.6之间。默认值为0.5
+    inserted - 两个原始数据点之间插值的数量。默认值为10
+    closed  - 曲线是否封闭，如是，则首尾相连。默认曲线不封闭
+    """
+
+    assert isinstance(date_x, (list, np.ndarray)), u'x数据集不是期望的列表或numpy数组类型'
+    assert isinstance(date_y, (list, np.ndarray)), u'y数据集不是期望的列表或numpy数组类型'
+
+    if isinstance(date_x, list) and isinstance(date_y, list):
+        assert len(date_x) == len(date_y), u'x数据集和y数据集长度不匹配'
+        date_x = np.array(date_x)
+        date_y = np.array(date_y)
+    elif isinstance(date_x, np.ndarray) and isinstance(date_y, np.ndarray):
+        assert date_x.shape == date_y.shape, u'x数据集和y数据集长度不匹配'
+    else:
+        raise Exception(u'x数据集或y数据集类型错误')
+
+    # 第1步：生成原始数据折线中点集
+    mid_points = list()
+    for i in range(1, date_x.shape[0]):
+        mid_points.append({
+            'start': (date_x[i - 1], date_y[i - 1]),
+            'end': (date_x[i], date_y[i]),
+            'mid': ((date_x[i] + date_x[i - 1]) / 2.0, (date_y[i] + date_y[i - 1]) / 2.0)
+        })
+
+    if closed:
+        mid_points.append({
+            'start': (date_x[-1], date_y[-1]),
+            'end': (date_x[0], date_y[0]),
+            'mid': ((date_x[0] + date_x[-1]) / 2.0, (date_y[0] + date_y[-1]) / 2.0)
+        })
+
+    # 第2步：找出中点连线及其分割点
+    split_points = list()
+    for i in range(len(mid_points)):
+        if i < (len(mid_points) - 1):
+            j = i + 1
+        elif closed:
+            j = 0
+        else:
+            continue
+
+        x00, y00 = mid_points[i]['start']
+        x01, y01 = mid_points[i]['end']
+        x10, y10 = mid_points[j]['start']
+        x11, y11 = mid_points[j]['end']
+        d0 = np.sqrt(np.power((x00 - x01), 2) + np.power((y00 - y01), 2))
+        d1 = np.sqrt(np.power((x10 - x11), 2) + np.power((y10 - y11), 2))
+        k_split = 1.0 * d0 / (d0 + d1)
+
+        mx0, my0 = mid_points[i]['mid']
+        mx1, my1 = mid_points[j]['mid']
+
+        split_points.append({
+            'start': (mx0, my0),
+            'end': (mx1, my1),
+            'split': (mx0 + (mx1 - mx0) * k_split, my0 + (my1 - my0) * k_split)
+        })
+
+    # 第3步：平移中点连线，调整端点，生成控制点
+    crt_points = list()
+    for i in range(len(split_points)):
+        vx, vy = mid_points[i]['end']  # 当前顶点的坐标
+        dx = vx - split_points[i]['split'][0]  # 平移线段x偏移量
+        dy = vy - split_points[i]['split'][1]  # 平移线段y偏移量
+
+        sx, sy = split_points[i]['start'][0] + dx, split_points[i]['start'][1] + dy  # 平移后线段起点坐标
+        ex, ey = split_points[i]['end'][0] + dx, split_points[i]['end'][1] + dy  # 平移后线段终点坐标
+
+        cp0 = sx + (vx - sx) * k, sy + (vy - sy) * k  # 控制点坐标
+        cp1 = ex + (vx - ex) * k, ey + (vy - ey) * k  # 控制点坐标
+
+        if crt_points:
+            crt_points[-1].insert(2, cp0)
+        else:
+            crt_points.append([mid_points[0]['start'], cp0, mid_points[0]['end']])
+
+        if closed:
+            if i < (len(mid_points) - 1):
+                crt_points.append([mid_points[i + 1]['start'], cp1, mid_points[i + 1]['end']])
+            else:
+                crt_points[0].insert(1, cp1)
+        else:
+            if i < (len(mid_points) - 2):
+                crt_points.append([mid_points[i + 1]['start'], cp1, mid_points[i + 1]['end']])
+            else:
+                crt_points.append([mid_points[i + 1]['start'], cp1, mid_points[i + 1]['end'], mid_points[i + 1]['end']])
+                crt_points[0].insert(1, mid_points[0]['start'])
+
+    # 第4步：应用贝塞尔曲线方程插值
+    out = list()
+    for item in crt_points:
+        inserted = item[3][0] - item[0][0] - 1
+        group = bezier_curve(item[0], item[1], item[2], item[3], inserted)
+        out.append(group[:-1])
+
+    out.append(group[-1:])
+    out = np.vstack(out)
+
+    return out.T[0], out.T[1]
+
+def crop_brain(path):
+    mri=ants.image_read(fMOST_PI_CONFIG['output_dir']+'/MRI/MRI_brain_bc_dn.nii.gz')
+    nmt=ants.image_read('template/NMT/NMT_brain/NMT_v2.0_sym_SS.nii.gz')
+    t=ants.registration(nmt,mri,'Similarity')
+    mri_=ants.apply_transforms(nmt,mri,t['fwdtransforms'],'bSpline')
+    mri_.to_file(fMOST_PI_CONFIG['output_dir']+'/MRI/MRI_brain_bc_dn.nii.gz')
+    if not fMOST_PI_CONFIG['wholeBrain']:
+        if fMOST_PI_CONFIG['LR'] == 'L':
+            mri_[int(mri_.shape[0] / 2):mri_.shape[0], 0:mri_.shape[1], 0:mri_.shape[2]] = 0
+        elif fMOST_PI_CONFIG['LR'] == 'R':
+            mri_[0:int(mri_.shape[0] / 2), 0:mri_.shape[1], 0:mri_.shape[2]] = 0
+        mri_.to_file(fMOST_PI_CONFIG['output_dir']+'/MRI/MRI_brain_bc_dn_.nii.gz')
+    else:
+        mri_.to_file(fMOST_PI_CONFIG['output_dir']+'/MRI/MRI_brain_bc_dn_.nii.gz')

@@ -1,0 +1,15 @@
+#!/usr/bin/env python
+# -*- coding: UTF-8 -*-
+"""
+@Project ：Macaca-Star
+@File    ：PI_MRI.py
+@Author  ：Zauber
+@Date    ：2024/6/3
+"""
+from utils.fMOST_PI_preproc import tif_to_nii, normalize_to_8bit, denoise_img, remove_artifact
+
+def PI_preproc():
+    # tif_to_nii()
+    # normalize_to_8bit()
+    # denoise_img()
+    remove_artifact()
