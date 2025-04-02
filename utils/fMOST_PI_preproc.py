@@ -51,19 +51,19 @@ def normalize_to_8bit():
 def mas_cerebellum():
     logger = loggerz.get_logger()
     logger.info('Remove cerebellum')
-    fix = ants.image_read( fMOST_PI_CONFIG['output_dir'] + '/fMOST_PI/PI_8bit.nii.gz')
+    fix = ants.image_read(fMOST_PI_CONFIG['output_dir'] + '/fMOST_PI/PI_8bit.nii.gz')
     fix_ = ants.resample_image(fix, (0.25, 0.25, 0.25), interp_type=4)
     move = ants.image_read(os.getcwd() + '/template/NMT/0.25mm/NMT_v2.0_asym_brain_L.nii.gz')
     atlas = ants.image_read(os.getcwd() + '/template/NMT/0.25mm/cerebellum_L.nii.gz')
     pi_affine_transform = ants.registration(fix_, move, type_of_transform='SyN', reg_iterations=(40, 20, 0))
     atlas_ = ants.apply_transforms(fix_, atlas, pi_affine_transform['fwdtransforms'], 'multiLabel')
     # atlas_ = ants.morphology(atlas_affine, operation='dilate', radius=3, mtype='binary', shape='ball')
-    ants.image_write(atlas_,SUBJECT_DIR + '/PI_T1/atlas/cerebellum_mask_in_PI_0.25mm.nii.gz')
+    ants.image_write(atlas_,fMOST_PI_CONFIG['output_dir'] + '/fMOST_PI/atlas/cerebellum_mask_in_PI_0.25mm.nii.gz')
     pi_affine_transform = ants.registration(fix, fix_, type_of_transform='Affine', reg_iterations=(40, 20, 0))
     atlas_h = ants.apply_transforms(fix, atlas_, pi_affine_transform['fwdtransforms'], 'multiLabel')
     mas = ants.mask_image(fix, atlas_h, 0)
-    ants.image_write(mas, SUBJECT_DIR + '/PI_T1/tmp/PI_rmc_' + str(SCALE) + 'mm.nii.gz')
-    ants.image_write(atlas_h, SUBJECT_DIR + '/PI_T1/tmp/cerebellum_mask_' + str(SCALE) + 'mm.nii.gz')
+    ants.image_write(mas, fMOST_PI_CONFIG['output_dir'] + '/fMOST_PI/tmp/PI_rmc.nii.gz')
+    ants.image_write(atlas_h, fMOST_PI_CONFIG['output_dir'] + '/fMOST_PI/tmp/cerebellum_mask.nii.gz')
 
 
 def denoise_img():
