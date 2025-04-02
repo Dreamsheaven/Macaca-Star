@@ -9,5 +9,6 @@ This project focuses on the registration of macaque brains and includes various 
 # Installation
 ```Bash
 git clone https://github.com/HNU-BIE/Macaca-Star.git
+
 pip install -r requirements.txt
 ```
