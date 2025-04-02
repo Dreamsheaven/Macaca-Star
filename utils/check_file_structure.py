@@ -1,0 +1,29 @@
+import os
+import sys
+import yaml
+import utils.Logger as loggerz
+YAML_PATH = os.getcwd()+'/config/fMOST_PI_config.yaml'
+
+def check_file_structure():
+    loggerz.init_logger('Macaca-Star')
+    logger = loggerz.get_logger()
+    logger.info('check file structure')
+    error = False
+    config = yaml.safe_load(open(YAML_PATH, 'r'))
+    if not os.path.exists(config['subject_dir']):
+        logger.error('please create subject_dir or set correct subject_dir')
+        error = True
+    if not os.path.exists(config['output_dir']):
+        os.mkdir(config['output_dir'])
+    if not os.path.exists(config['output_dir']+'/MRI'):
+        os.mkdir(config['output_dir']+'/MRI')
+    if not os.path.exists(config['output_dir']+'/fMOST_PI'):
+        os.mkdir(config['output_dir']+'/fMOST_PI')
+    if not os.path.exists(config['output_dir']+'/fMOST_PI/tmp'):
+        os.mkdir(config['output_dir']+'/fMOST_PI/tmp')
+    if not os.path.exists(config['output_dir']+'/fMOST_PI/atlas'):
+        os.mkdir(config['output_dir']+'/fMOST_PI/atlas')
+    if error:
+        sys.exit(1)
+
+
