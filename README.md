@@ -7,6 +7,9 @@ The [example](./example) folder in this project contains the test data.
 
 <p align="center">
 <img src="https://github.com/user-attachments/assets/e850250e-9390-4c54-a3d7-99e8f61e1812" width="800">
+
+# Macaca-Star pipeline
+Macaca-Star is an open-source software project developed using the Python. It significantly simplifies the installation process and lowers the barrier to use. The software has been successfully installed and tested on both Windows, Ubuntu 20.04, and Ubuntu 22.04 systems, ensuring excellent compatibility and stability.
   
 # Installation
 ```Bash
