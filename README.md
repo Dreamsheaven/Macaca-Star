@@ -38,6 +38,8 @@ Recommended: NVIDIA RTX A6000 (48GB) or better
 git clone https://github.com/HNU-BIE/Macaca-Star.git
 
 pip install -r requirements.txt
+or
+conda env create -f enviroment.yml
 ```
 
 # License
