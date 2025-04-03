@@ -13,5 +13,5 @@ def PI_preproc():
     # tif_to_nii()
     # normalize_to_8bit()
     # denoise_img()
-    mas_cerebellum()
+    # mas_cerebellum()
     remove_artifact()

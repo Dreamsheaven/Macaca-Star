@@ -13,16 +13,16 @@ import scipy
 import tifffile
 import yaml
 from matplotlib import pyplot as plt
-import utils.Logger as loggerz
 import cv2
 YAML_PATH = os.getcwd() + '/config/fMOST_PI_config.yaml'
 fMOST_PI_CONFIG = yaml.safe_load(open(YAML_PATH, 'r'))
 
 def horizontal():
     isPlot=False
-    pi = ants.image_read(fMOST_PI_CONFIG['output_dir'] + '/fMOST_PI/PI_8bit.nii.gz')
-    pi_origin=ants.image_clone(pi)
-    pi_origin[:,:,:]=0
+    pi = ants.image_read(fMOST_PI_CONFIG['output_dir'] + '/fMOST_PI/tmp/PI_rmc.nii.gz')
+    pi_origin=ants.image_read(fMOST_PI_CONFIG['output_dir'] + '/fMOST_PI/PI_8bit.nii.gz')
+    # pi_origin=ants.image_clone(pi)
+    # pi_origin[:,:,:]=0
     pi_avg = np.zeros((pi.shape[0], pi.shape[2]))
     for k in range(0, pi.shape[2]):
         pi_slice = pi[:, :, k].numpy()
@@ -79,9 +79,9 @@ def horizontal():
     pi_ratio[np.where((pi_ratio >= 0.0) & (pi_ratio < 1.0))] = 1.0
     pi_ratio[pi_ratio > 8.0] = 1.0
     pi_ratio[pi_ratio < 0.01] = 1.0
-    pi_data=pi.numpy()
+    # pi_data=pi.numpy()
     for j in range(0, pi.shape[1]):
-        pi_origin[:, j, :] = pi_data[:, j, :] * pi_ratio[:, :]
+        pi_origin[:, j, :] = pi_origin[:, j, :].numpy() * pi_ratio[:, :]
     pi_avg=pi_avg.astype(np.float32)
     pi_ratio = pi_ratio.astype(np.float32)
     cv2.imwrite(fMOST_PI_CONFIG['output_dir'] + '/fMOST_PI/tmp/PI_avg_h.tif', pi_avg)
@@ -94,11 +94,7 @@ def sagittal():
     rm_bias = 20
     rm_value = 10
     pi_origin = ants.image_read(fMOST_PI_CONFIG['output_dir'] + '/fMOST_PI/tmp/PI_rm_h.nii.gz')
-    pi_origin_data=pi_origin.numpy()[:,:,:]
-    pi_origin_data = np.nan_to_num(pi_origin_data)
-    pi_origin_data[pi_origin_data<=0]=0
-    pi_origin[:,:,:]=pi_origin_data
-    pi=pi_origin
+    pi=ants.image_read(fMOST_PI_CONFIG['output_dir'] + '/fMOST_PI/tmp/PI_rmc.nii.gz')
     pi_avg = np.zeros((pi.shape[0], pi.shape[2]))
     pi_bessel = np.zeros((pi.shape[0], pi.shape[2]))
     for i in range(0, pi.shape[0]):
@@ -229,17 +225,6 @@ def peaks_restore(peaks, dis, se, status):
 
 
 def bezier_curve(p0, p1, p2, p3, inserted):
-    """
-    三阶贝塞尔曲线
-
-    p0, p1, p2, p3 - 点坐标，tuple、list或numpy.ndarray类型
-    inserted  - p0和p3之间插值的数量
-    """
-
-    assert isinstance(p0, (tuple, list, np.ndarray)), u'点坐标不是期望的元组、列表或numpy数组类型'
-    assert isinstance(p0, (tuple, list, np.ndarray)), u'点坐标不是期望的元组、列表或numpy数组类型'
-    assert isinstance(p0, (tuple, list, np.ndarray)), u'点坐标不是期望的元组、列表或numpy数组类型'
-    assert isinstance(p0, (tuple, list, np.ndarray)), u'点坐标不是期望的元组、列表或numpy数组类型'
 
     if isinstance(p0, (tuple, list)):
         p0 = np.array(p0)
@@ -259,29 +244,16 @@ def bezier_curve(p0, p1, p2, p3, inserted):
     return np.vstack(points)
 
 def smoothing_base_bezier(date_x, date_y, k=0.5, inserted=10, closed=False):
-    """
-    基于三阶贝塞尔曲线的数据平滑算法
-
-    date_x  - x维度数据集，list或numpy.ndarray类型
-    date_y  - y维度数据集，list或numpy.ndarray类型
-    k   - 调整平滑曲线形状的因子，取值一般在0.2~0.6之间。默认值为0.5
-    inserted - 两个原始数据点之间插值的数量。默认值为10
-    closed  - 曲线是否封闭，如是，则首尾相连。默认曲线不封闭
-    """
-
-    assert isinstance(date_x, (list, np.ndarray)), u'x数据集不是期望的列表或numpy数组类型'
-    assert isinstance(date_y, (list, np.ndarray)), u'y数据集不是期望的列表或numpy数组类型'
 
     if isinstance(date_x, list) and isinstance(date_y, list):
-        assert len(date_x) == len(date_y), u'x数据集和y数据集长度不匹配'
         date_x = np.array(date_x)
         date_y = np.array(date_y)
     elif isinstance(date_x, np.ndarray) and isinstance(date_y, np.ndarray):
-        assert date_x.shape == date_y.shape, u'x数据集和y数据集长度不匹配'
+        assert date_x.shape == date_y.shape, u'len(x)!=len(y)'
     else:
-        raise Exception(u'x数据集或y数据集类型错误')
+        raise Exception(u'The type of the x dataset or the y dataset is incorrect.')
 
-    # 第1步：生成原始数据折线中点集
+
     mid_points = list()
     for i in range(1, date_x.shape[0]):
         mid_points.append({
@@ -297,7 +269,7 @@ def smoothing_base_bezier(date_x, date_y, k=0.5, inserted=10, closed=False):
             'mid': ((date_x[0] + date_x[-1]) / 2.0, (date_y[0] + date_y[-1]) / 2.0)
         })
 
-    # 第2步：找出中点连线及其分割点
+
     split_points = list()
     for i in range(len(mid_points)):
         if i < (len(mid_points) - 1):
@@ -324,18 +296,17 @@ def smoothing_base_bezier(date_x, date_y, k=0.5, inserted=10, closed=False):
             'split': (mx0 + (mx1 - mx0) * k_split, my0 + (my1 - my0) * k_split)
         })
 
-    # 第3步：平移中点连线，调整端点，生成控制点
     crt_points = list()
     for i in range(len(split_points)):
-        vx, vy = mid_points[i]['end']  # 当前顶点的坐标
-        dx = vx - split_points[i]['split'][0]  # 平移线段x偏移量
-        dy = vy - split_points[i]['split'][1]  # 平移线段y偏移量
+        vx, vy = mid_points[i]['end']
+        dx = vx - split_points[i]['split'][0]
+        dy = vy - split_points[i]['split'][1]
 
-        sx, sy = split_points[i]['start'][0] + dx, split_points[i]['start'][1] + dy  # 平移后线段起点坐标
-        ex, ey = split_points[i]['end'][0] + dx, split_points[i]['end'][1] + dy  # 平移后线段终点坐标
+        sx, sy = split_points[i]['start'][0] + dx, split_points[i]['start'][1] + dy
+        ex, ey = split_points[i]['end'][0] + dx, split_points[i]['end'][1] + dy
 
-        cp0 = sx + (vx - sx) * k, sy + (vy - sy) * k  # 控制点坐标
-        cp1 = ex + (vx - ex) * k, ey + (vy - ey) * k  # 控制点坐标
+        cp0 = sx + (vx - sx) * k, sy + (vy - sy) * k
+        cp1 = ex + (vx - ex) * k, ey + (vy - ey) * k
 
         if crt_points:
             crt_points[-1].insert(2, cp0)
@@ -354,7 +325,6 @@ def smoothing_base_bezier(date_x, date_y, k=0.5, inserted=10, closed=False):
                 crt_points.append([mid_points[i + 1]['start'], cp1, mid_points[i + 1]['end'], mid_points[i + 1]['end']])
                 crt_points[0].insert(1, mid_points[0]['start'])
 
-    # 第4步：应用贝塞尔曲线方程插值
     out = list()
     for item in crt_points:
         inserted = item[3][0] - item[0][0] - 1
