@@ -41,7 +41,9 @@ pip install -r requirements.txt
 or
 conda env create -f enviroment.yml
 ```
-
+# Getting Started
+## Download Checkpoints
+Download the model [checkpoints](./checkpoints). All model checkpoints are saved in the "checkpoints" folder within the program directory.
 # License
 This work is licensed under a [Creative Commons Attribution 4.0 International License](http://creativecommons.org/licenses/by/4.0/).
 
