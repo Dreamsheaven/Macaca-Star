@@ -343,3 +343,76 @@ def crop_brain(img):
         return img
     else:
         return img
+
+def log(base, x):
+    return np.log(x, out=np.zeros_like(x)) / np.log(base, out=np.zeros_like(x))
+
+
+def atlas_reg_ByT1w():
+    t1 = ants.image_read(path + '/reg/T1w_brain_L_edit.nii.gz')
+    tsfer = ants.image_read(path+'/reg/T1likePI_aug_correction.nii.gz')
+    pi=ants.image_read(path+'/reg/PI_alignNMT.nii.gz')
+    tmp = ants.image_read('/media/zzb/data/data/macaque_imgs/NMT/LR/NMT_v2.0_sym_SS_Lv2_edit.nii.gz')
+    atlas = ants.image_read('/media/zzb/data/data/macaque_imgs/NMT/LR/D99_atlas_in_NMT_cortical_edit_Lv2.nii.gz')
+    atlas2 = ants.image_read('/media/zzb/data/data/macaque_imgs/NMT/LR/subcortex_Lv2.nii.gz')
+    atlas3 = ants.image_read('/media/zzb/data/data/macaque_imgs/NMT/LR/charm/CHARM_1_in_NMT_v2.0_sym_L.nii.gz')
+    atlas4 = ants.image_read('/media/zzb/data/data/macaque_imgs/NMT/LR/SARM_2_in_NMT_v2.0_sym_L.nii.gz')
+    t1,tsfer,pi,tmp,atlas,atlas2,atlas3,atlas4=reset_img([t1,tsfer,pi,tmp,atlas,atlas2,atlas3,atlas4])
+    tf1 = ants.registration(t1,tmp, 'SyN',
+                            syn_metric='mattes',
+                            reg_iterations=(40, 20, 10),flow_sigma=3,outprefix=path+'/reg/xfms/atlas_NMTtoT1w_')
+    tf1['warpedmovout'].to_file(path + '/reg/atlas/TMP_inT1w.nii.gz')
+    tmp_ = ants.apply_transforms(t1,tmp, tf1['fwdtransforms'],'bSpline' )
+
+    tf3 = ants.registration(t1,tsfer, 'SyN',
+                            syn_metric='mattes',
+                            reg_iterations=(40, 20, 10),flow_sigma=3,outprefix=path+'/reg/xfms/atlas_PItoT1w_')
+    tf3['warpedmovout'].to_file(path + '/reg/atlas/T1PI_inT1w.nii.gz')
+    tsfer_ = ants.apply_transforms(t1,tsfer, tf3['fwdtransforms'], 'bSpline')
+    tsfer_[:,:,:]=tsfer_.numpy()*0.8+t1.numpy()*0.2
+    tf2 = ants.registration(tsfer_,tmp_, 'SyN',
+                            syn_metric='mattes',
+                            reg_iterations=(40, 40, 40),flow_sigma=3,outprefix=path+'/reg/xfms/atlas_T1toGFP_')
+    tmp_=tf2['warpedmovout']
+    tmp_ = ants.apply_transforms(tsfer, tmp_, tf3['invtransforms'], 'bSpline')
+    tmp_.to_file(path + '/reg/atlas/TMP_inT1PI.nii.gz')
+    ####################################################################
+    atlas_ = ants.apply_transforms(t1, atlas, tf1['fwdtransforms'], 'multiLabel')
+    atlas_.to_file(path + '/reg/atlas/D99_inT1w.nii.gz')
+    atlas_ = ants.apply_transforms(tsfer_, atlas_, tf2['fwdtransforms'], 'multiLabel')
+    atlas_ = ants.apply_transforms(tsfer, atlas_, tf3['invtransforms'], 'multiLabel')
+    atlas_.to_file(path + '/reg/atlas/D99_inPI.nii.gz')
+
+    atlas2_ = ants.apply_transforms(t1, atlas2, tf1['fwdtransforms'], 'multiLabel')
+    atlas2_.to_file(path + '/reg/atlas/subcortex_inT1w.nii.gz')
+    atlas2_ = ants.apply_transforms(tsfer_, atlas2_, tf2['fwdtransforms'], 'multiLabel')
+    atlas2_ = ants.apply_transforms(tsfer, atlas2_, tf3['invtransforms'], 'multiLabel')
+    atlas2_.to_file(path + '/reg/atlas/subcortex_inPI.nii.gz')
+
+    atlas3_ = ants.apply_transforms(t1, atlas3, tf1['fwdtransforms'], 'multiLabel')
+    atlas3_.to_file(path + '/reg/atlas/CHARM1_inT1w.nii.gz')
+    atlas3_ = ants.apply_transforms(tsfer_, atlas3_, tf2['fwdtransforms'], 'multiLabel')
+    atlas3_ = ants.apply_transforms(tsfer, atlas3_, tf3['invtransforms'], 'multiLabel')
+    atlas3_.to_file(path + '/reg/atlas/CHARM1_inPI.nii.gz')
+
+    atlas4_ = ants.apply_transforms(t1, atlas4, tf1['fwdtransforms'], 'multiLabel')
+    atlas4_.to_file(path + '/reg/atlas/SARM2_inT1w.nii.gz')
+    atlas4_ = ants.apply_transforms(tsfer_, atlas4_, tf2['fwdtransforms'], 'multiLabel')
+    atlas4_ = ants.apply_transforms(tsfer, atlas4_, tf3['invtransforms'], 'multiLabel')
+    atlas4_.to_file(path + '/reg/atlas/SARM2_inPI.nii.gz')
+
+    img_ = ants.apply_transforms(tmp, t1, tf1['invtransforms'], 'bSpline')
+    img_.to_file(path + '/reg/atlas/T1w_inNMT.nii.gz')
+
+    img_ = ants.apply_transforms(t1, tsfer, tf3['fwdtransforms'], 'bSpline')
+    img_.to_file(path + '/reg/atlas/T1PI_inT1w.nii.gz')
+    img_ = ants.apply_transforms(t1, img_, tf2['invtransforms'], 'bSpline')
+    img_ = ants.apply_transforms(tmp, img_, tf1['invtransforms'], 'bSpline')
+    img_.to_file(path + '/reg/atlas/T1PI_inNMT.nii.gz')
+
+    pi_ = ants.apply_transforms(t1, pi, tf3['fwdtransforms'], 'bSpline')
+    pi_.to_file(path + '/reg/atlas/PI_inT1w.nii.gz')
+    pi_ = ants.apply_transforms(t1, pi_, tf2['invtransforms'], 'bSpline')
+    pi_ = ants.apply_transforms(tmp, pi_, tf1['invtransforms'], 'bSpline')
+    pi_.to_file(path + '/reg/atlas/PI_inNMT.nii.gz')
+atlas_reg_ByT1w()

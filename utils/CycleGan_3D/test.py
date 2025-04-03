@@ -210,40 +210,16 @@ def inference(model, image_path, result_path, resample, resolution, patch_size_x
     print("{}: Save evaluate label at {} success".format(datetime.datetime.now(), result_path))
 
 
-# if __name__ == '__main__':
-#     opt = TestOptions().parse()
-#     print(0)
-#     model = create_model(opt)
-#     model.setup(opt)
-#
-#     inference(model, opt.image, opt.result, opt.resample, opt.new_resolution, opt.patch_size[0],
-#               opt.patch_size[1], opt.patch_size[2], opt.stride_inplane, opt.stride_layer, 1)
 
-YAML_PATH = os.getcwd()+'/config/config.yaml'
-
+YAML_PATH = os.getcwd() + '/config/fMOST_PI_config.yaml'
+fMOST_PI_CONFIG = yaml.safe_load(open(YAML_PATH, 'r'))
 
 def PI_to_T1_cyclegan():
     opt = TestOptions().parse()
-    config = yaml.safe_load(open(YAML_PATH, 'r'))
-    subject_dir = config['subject_dir']
-    # opt.which_epoch = os.getcwd() + '/utils/CycleGan_3D/checkpoints/PI2NMT_0.25mm/latest_net_G_B.pth'
-    if not os.path.exists(subject_dir + '/PI_T1/PI_brain_bc_icxyz_0.25mm.nii.gz'):
-        opt.image = subject_dir + '/PI_T1/PI_brain_bc_0.25mm.nii.gz'
-    else:
-        opt.image = subject_dir + '/PI_T1/PI_brain_bc_icxyz_0.25mm.nii.gz'
-    opt.result = subject_dir + '/PI_T1/tmp/T1PI_tmp_0.25mm.nii.gz'
-    opt.checkpoints_dir = os.getcwd() + '/utils/CycleGan_3D/checkpoints'
-    print(0)
-    model = create_model(opt)
-    model.setup(opt)
-
-    inference(model, opt.image, opt.result, opt.resample, opt.new_resolution, opt.patch_size[0],
-              opt.patch_size[1], opt.patch_size[2], opt.stride_inplane, opt.stride_layer, 1)
-
-    opt.image = subject_dir + '/PI_T1/tmp/PI_brain_bc_nocerebellum_0.25mm.nii.gz'
-    opt.result = subject_dir + '/PI_T1/tmp/T1PI_nocerebellum_0.25mm.nii.gz'
-    opt.checkpoints_dir = os.getcwd() + '/utils/CycleGan_3D/checkpoints'
-    print(0)
+    opt.image = fMOST_PI_CONFIG['output_dir']+'/reg/PI_alignNMT.nii.gz'
+    opt.result =fMOST_PI_CONFIG['output_dir']+'/reg/T1likePI.nii.gz'
+    opt.checkpoints_dir = os.getcwd() + '/checkpoints'
+    opt.name = 'fMOSTPI2NMT'
     model = create_model(opt)
     model.setup(opt)
 
@@ -251,38 +227,4 @@ def PI_to_T1_cyclegan():
               opt.patch_size[1], opt.patch_size[2], opt.stride_inplane, opt.stride_layer, 1)
 
 
-def T1_to_PI_cyclegan():
-    opt = TestOptions().parse()
-    config = yaml.safe_load(open(YAML_PATH, 'r'))
-    subject_dir = config['subject_dir']
-    # opt.which_epoch = os.getcwd() + '/utils/CycleGan_3D/checkpoints/PI2NMT_0.25mm/latest_B'
-    opt.image = os.getcwd() + '/template/NMT/0.25mm/NMT_v2.0_asym_brain_L.nii.gz'
-    opt.result = subject_dir + '/PI_T1/NMTtoPI_0.25mm.nii.gz'
-    opt.checkpoints_dir = os.getcwd() + '/utils/CycleGan_3D/checkpoints'
-    opt.which_direction='BtoA'
-    opt.name='NMT2PI'
-    print(0)
-    model = create_model(opt)
-    model.setup(opt)
 
-    inference(model, opt.image, opt.result, opt.resample, opt.new_resolution, opt.patch_size[0],
-              opt.patch_size[1], opt.patch_size[2], opt.stride_inplane, opt.stride_layer, 1)
-
-
-def PI_to_T1_cyclegan_test():
-    opt = TestOptions().parse()
-    # config = yaml.safe_load(open(YAML_PATH, 'r'))
-    # subject_dir = config['subject_dir']
-    # subject_dir='/media/dell/data2_zjLab/macaque/zzb/11.15/PI/194787/'
-    # opt.which_epoch = os.getcwd() + '/utils/CycleGan_3D/checkpoints/PI2NMT_0.25mm/latest_net_G_B.pth'
-    opt.image = '/media/dell/data2_zjLab/macaque/zzb/2021.1.17/C060/MRI_exvivo_dnrg_bc_clahe_0.25mm.nii.gz'
-    opt.result = '/media/dell/data2_zjLab/macaque/zzb/2021.1.17/C060/rrrr.nii.gz'
-    opt.checkpoints_dir = '/media/dell/D/PycharmProjects/3D_macaque_reg/utils/CycleGan_3D/checkpoints'
-    print(0)
-    model = create_model(opt)
-    model.setup(opt)
-
-    inference(model, opt.image, opt.result, opt.resample, opt.new_resolution, opt.patch_size[0],
-              opt.patch_size[1], opt.patch_size[2], opt.stride_inplane, opt.stride_layer, 1)
-
-# PI_to_T1_cyclegan_test()
