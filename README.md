@@ -4,7 +4,7 @@
 &#x2022; [Overview](#Overview)  
 &#x2022; [Macaca-Star pipeline](#Macaca-Star-pipeline)  
 &#x2022; [3D modality tansfer](#3D-modality-tansfer)  
-&#x2022; [Installation](#System-requirements) 
+&#x2022; [System requirements](#System-requirements)   
 &#x2022; [Installation](#Installation)  
 
 # Overview
