@@ -27,6 +27,8 @@ def check_file_structure():
         os.mkdir(config['output_dir']+'/reg/')
     if not os.path.exists(config['output_dir']+'/reg/xfms'):
         os.mkdir(config['output_dir']+'/reg/xfms')
+    if not os.path.exists(config['output_dir'] + '/reg/atlas'):
+        os.mkdir(config['output_dir'] + '/reg/atlas')
     if error:
         sys.exit(1)
 

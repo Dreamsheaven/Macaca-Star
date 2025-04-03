@@ -13,10 +13,12 @@ import tifffile
 import ants
 import yaml
 import albumentations as A
-from utils.util import horizontal, sagittal, crop_brain, log
+from utils.util import horizontal, sagittal, crop_brain, log, atlas_reg_ByT1w, atlas_reg_noT1w
 
 YAML_PATH = os.getcwd() + '/config/fMOST_PI_config.yaml'
 fMOST_PI_CONFIG = yaml.safe_load(open(YAML_PATH, 'r'))
+MRI_YAML_PATH = os.getcwd() + '/config/MRI_config.yaml'
+MRI_CONFIG = yaml.safe_load(open(MRI_YAML_PATH, 'r'))
 
 def tif_to_nii():
     logger = loggerz.get_logger()
@@ -175,5 +177,10 @@ def correct_T1like():
 def fMOST_PI_3Dreg():
     logger = loggerz.get_logger()
     logger.info('fMOST PI register to NMT')
-    if fMOST_PI_CONFIG['MRI-guided']:
+    if MRI_CONFIG['MRI-guided']:
+        logger.WARNING('MRI-guided registration')
         atlas_reg_ByT1w()
+    else:
+        logger.WARNING('no MRI-guided registration')
+        atlas_reg_noT1w()
+
