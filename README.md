@@ -6,6 +6,7 @@
 &#x2022; [3D modality tansfer](#3D-modality-tansfer)  
 &#x2022; [System requirements](#System-requirements)   
 &#x2022; [Installation](#Installation)  
+&#x2022; [Getting Started](#Getting-Started)  
 &#x2022; [License](#License)  
 
 # Overview
