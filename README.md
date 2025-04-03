@@ -23,7 +23,7 @@ The [example](./example) folder in this project contains the test data.
 We provide a robust 3D modality transfer method for 3D fMOST PI and Blockface images, and the [checkpoints](./checkpoints) has already been uploaded to the project. . This method does not require re-training during usage.
 
 # System requirements
-The software has been successfully installed and tested on Windows, Ubuntu 20.04, and Ubuntu 22.04 systems, ensuring excellent compatibility and stability.
+The software has been successfully installed and tested on Windows, Ubuntu 20.04, and Ubuntu 22.04 systems, ensuring excellent compatibility and stability.  
 To ensure smooth operation of the program, a minimum of 32GB of RAM is required. This software includes deep learning models, so it is necessary to have the required environments, such as CUDA, installed for deep learning tasks. If you wish to retrain the 3D CycleGAN model, a high-performance GPU such as the A6000 (48GB) or better is recommended. We also provide pretrained results, which can be found in the "[checkpoints](./checkpoints)" folder.
 
 Minimum 32GB RAM required for optimal performance
