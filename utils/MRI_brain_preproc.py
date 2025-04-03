@@ -1,3 +1,11 @@
+#!/usr/bin/env python
+# -*- coding: UTF-8 -*-
+"""
+@Project ：Macaca-Star
+@File    ：MRI_brain_preproc.py
+@Author  ：Zauber
+@Date    ：2024/6/3
+"""
 import os
 import shutil
 import yaml
