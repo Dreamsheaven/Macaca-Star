@@ -13,7 +13,7 @@ import tifffile
 import ants
 import yaml
 
-from utils.util import horizontal, sagittal
+from utils.util import horizontal, sagittal, crop_brain
 
 YAML_PATH = os.getcwd() + '/config/fMOST_PI_config.yaml'
 fMOST_PI_CONFIG = yaml.safe_load(open(YAML_PATH, 'r'))
@@ -53,8 +53,10 @@ def mas_cerebellum():
     logger.info('Remove cerebellum')
     fix = ants.image_read(fMOST_PI_CONFIG['output_dir'] + '/fMOST_PI/PI_8bit.nii.gz')
     fix_ = ants.resample_image(fix, (0.25, 0.25, 0.25), interp_type=4)
-    move = ants.image_read(os.getcwd() + '/template/NMT/0.25mm/NMT_v2.0_asym_brain_L.nii.gz')
-    atlas = ants.image_read(os.getcwd() + '/template/NMT/0.25mm/cerebellum_L.nii.gz')
+    move = ants.image_read(os.getcwd() + 'template/NMT/NMT_brain/NMT_v2.0_sym_SS.nii.gz')
+    atlas = ants.image_read(os.getcwd() + 'template/NMT/NMT_brain/NMT_v2.0_sym_cerebellum_mask.nii.gz')
+    move=crop_brain(move)
+    atlas = crop_brain(atlas)
     pi_affine_transform = ants.registration(fix_, move, type_of_transform='SyN', reg_iterations=(40, 20, 0))
     atlas_ = ants.apply_transforms(fix_, atlas, pi_affine_transform['fwdtransforms'], 'multiLabel')
     # atlas_ = ants.morphology(atlas_affine, operation='dilate', radius=3, mtype='binary', shape='ball')
