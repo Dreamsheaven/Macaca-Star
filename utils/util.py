@@ -21,8 +21,6 @@ def horizontal():
     isPlot=False
     pi = ants.image_read(fMOST_PI_CONFIG['output_dir'] + '/fMOST_PI/tmp/PI_rmc.nii.gz')
     pi_origin=ants.image_read(fMOST_PI_CONFIG['output_dir'] + '/fMOST_PI/PI_8bit.nii.gz')
-    # pi_origin=ants.image_clone(pi)
-    # pi_origin[:,:,:]=0
     pi_avg = np.zeros((pi.shape[0], pi.shape[2]))
     for k in range(0, pi.shape[2]):
         pi_slice = pi[:, :, k].numpy()

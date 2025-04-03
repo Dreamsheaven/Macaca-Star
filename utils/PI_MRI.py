@@ -12,6 +12,6 @@ from utils.fMOST_PI_preproc import tif_to_nii, normalize_to_8bit, denoise_img, r
 def PI_preproc():
     # tif_to_nii()
     # normalize_to_8bit()
-    # denoise_img()
     # mas_cerebellum()
-    remove_artifact()
+    # remove_artifact()
+    denoise_img()
