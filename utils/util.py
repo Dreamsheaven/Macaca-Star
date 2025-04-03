@@ -366,17 +366,12 @@ def smoothing_base_bezier(date_x, date_y, k=0.5, inserted=10, closed=False):
 
     return out.T[0], out.T[1]
 
-def crop_brain(path):
-    mri=ants.image_read(fMOST_PI_CONFIG['output_dir']+'/MRI/MRI_brain_bc_dn.nii.gz')
-    nmt=ants.image_read('template/NMT/NMT_brain/NMT_v2.0_sym_SS.nii.gz')
-    t=ants.registration(nmt,mri,'Similarity')
-    mri_=ants.apply_transforms(nmt,mri,t['fwdtransforms'],'bSpline')
-    mri_.to_file(fMOST_PI_CONFIG['output_dir']+'/MRI/MRI_brain_bc_dn.nii.gz')
+def crop_brain(img):
     if not fMOST_PI_CONFIG['wholeBrain']:
         if fMOST_PI_CONFIG['LR'] == 'L':
-            mri_[int(mri_.shape[0] / 2):mri_.shape[0], 0:mri_.shape[1], 0:mri_.shape[2]] = 0
+            img[int(img.shape[0] / 2):img.shape[0], 0:img.shape[1], 0:img.shape[2]] = 0
         elif fMOST_PI_CONFIG['LR'] == 'R':
-            mri_[0:int(mri_.shape[0] / 2), 0:mri_.shape[1], 0:mri_.shape[2]] = 0
-        mri_.to_file(fMOST_PI_CONFIG['output_dir']+'/MRI/MRI_brain_bc_dn_.nii.gz')
+            img[0:int(img.shape[0] / 2), 0:img.shape[1], 0:img.shape[2]] = 0
+        return img
     else:
-        mri_.to_file(fMOST_PI_CONFIG['output_dir']+'/MRI/MRI_brain_bc_dn_.nii.gz')
+        return img
