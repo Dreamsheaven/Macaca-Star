@@ -6,7 +6,7 @@
 The [example](./example) folder in this project contains the test data.
 
 <p align="center">
-<img src="https://github.com/user-attachments/assets/e850250e-9390-4c54-a3d7-99e8f61e1812" width="700">
+<img src="https://github.com/user-attachments/assets/e850250e-9390-4c54-a3d7-99e8f61e1812" width="800">
   
 # Installation
 ```Bash
