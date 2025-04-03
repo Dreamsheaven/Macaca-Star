@@ -10,7 +10,11 @@ The [example](./example) folder in this project contains the test data.
 
 # Macaca-Star pipeline
 Macaca-Star is an open-source software project developed using the Python. It significantly simplifies the installation process and lowers the barrier to use. The software has been successfully installed and tested on both Windows, Ubuntu 20.04, and Ubuntu 22.04 systems, ensuring excellent compatibility and stability.
-  
+
+# 3D modality tansfer
+<p align="center">
+<img src="https://github.com/user-attachments/assets/6b105954-14e3-4061-953d-311b27d08b62" width="800">
+
 # Installation
 ```Bash
 git clone https://github.com/HNU-BIE/Macaca-Star.git
