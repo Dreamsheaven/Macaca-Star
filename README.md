@@ -6,6 +6,7 @@
 &#x2022; [3D modality tansfer](#3D-modality-tansfer)  
 &#x2022; [System requirements](#System-requirements)   
 &#x2022; [Installation](#Installation)  
+&#x2022; [License](#License)  
 
 # Overview
 **Macaca-Star**: This project focuses on the registration of macaque brain images and includes a comprehensive set of preprocessing methods for handling and analyzing brain imaging data. The primary goal is to enable accurate alignment of macaque brain images across different modalities, facilitating the study of neuroanatomy and brain structure. The project supports multiple data types, including fMOST PI images, blockface-based fluorescence sections, and MRI scans. It integrates a combination of deep learning models and traditional image processing techniques to address various challenges, such as the removal of imaging artifacts, alignment of anatomical regions, and the integration of multi-modal data for accurate cross-modality registration.
