@@ -1,5 +1,8 @@
 # Macaca-Star: Fully Automated and Scalable Pipeline for Macaque Brain Registration
-  
+
+# Contents
+[Overview](#Overview)
+
 # Overview
 **Macaca-Star**:This project focuses on the registration of macaque brain images and includes a comprehensive set of preprocessing methods for handling and analyzing brain imaging data. The primary goal is to enable accurate alignment of macaque brain images across different modalities, facilitating the study of neuroanatomy and brain structure. The project implements a combination of deep learning models and traditional image processing techniques to handle a variety of challenges, including the removal of imaging artifacts, alignment of anatomical regions, and the integration of multi-modal data.
 
