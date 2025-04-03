@@ -1,0 +1,5 @@
+MRI-guided: True
+MRI_file: 'example/fMOST_PI/t1_gre3d_cor_anatomy_0.5mm.nii.gz'
+MRI_oc_bymetrix: True
+metrix: [[0,0,1],[-1,0,0],[0,-1,0]]
+rm_neck: 90

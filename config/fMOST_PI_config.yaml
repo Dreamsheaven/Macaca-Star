@@ -1,0 +1,7 @@
+subject_dir: 'example/fMOST_PI/fMOST_PI.tif'
+output_dir: 'example/fMOST_PI'
+wholeBrain: False
+LR: R
+spacing: [0.05,0.05,0.05]
+
+
