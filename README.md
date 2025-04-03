@@ -15,6 +15,7 @@ Macaca-Star is an open-source software project developed using the Python. It si
 <p align="center">
 <img src="https://github.com/user-attachments/assets/6b105954-14e3-4061-953d-311b27d08b62" width="800">
 
+We provide a robust modality transfer method for fMOST PI and Blockface images. This method does not require re-training during usage.
 # Installation
 ```Bash
 git clone https://github.com/HNU-BIE/Macaca-Star.git
