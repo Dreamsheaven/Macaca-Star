@@ -34,10 +34,18 @@ def check_file_structure(type):
         if error:
             sys.exit(1)
     else:
-        fluor_YAML_PATH = os.getcwd() + '/config/fluor_sections.yaml'
+        fluor_YAML_PATH = os.getcwd() + '/config/fluor_sections_config.yaml'
         fluor_config = yaml.safe_load(open(fluor_YAML_PATH, 'r'))
         if not os.path.exists(fluor_config['subject_dir']):
             logger.error('please create subject_dir or set correct subject_dir')
             error = True
+        if not os.path.exists(fluor_config['output_dir']):
+            os.mkdir(fluor_config['output_dir'])
+        if not os.path.exists(fluor_config['output_dir']+'/blockface'):
+            os.mkdir(fluor_config['output_dir']+'/blockface')
+        if not os.path.exists(fluor_config['output_dir']+'/reg3D'):
+            os.mkdir(fluor_config['output_dir']+'/reg3D')
+        if not os.path.exists(fluor_config['output_dir']+'/reg3D/xfms'):
+            os.mkdir(fluor_config['output_dir']+'/reg3D/xfms')
 
 

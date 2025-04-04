@@ -1,6 +1,7 @@
 import utils.Logger as loggerz
 from utils.MRI_NMT import MRI_preproc
 from utils.PI_MRI import PI_preproc
+from utils.blockface_MRI import blockface_preproc
 from utils.check_file_structure import check_file_structure
 
 

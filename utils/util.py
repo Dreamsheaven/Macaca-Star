@@ -459,3 +459,9 @@ def atlas_reg_noT1w():
     tsfer_ = ants.apply_transforms(tmp, tsfer, tf['invtransforms'], 'bSpline')
     tsfer_ = ants.copy_image_info(tmp_, tsfer_)
     tsfer_.to_file(fMOST_PI_CONFIG['output_dir'] + '/reg/atlas/T1PI_inNMT.nii.gz')
+
+
+def touint8(image):
+    image=(image - image.min()) / (image.max() - image.min()+1e-10) * 255
+    image=image.astype(np.uint8)
+    return image

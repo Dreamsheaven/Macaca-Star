@@ -1,8 +1,8 @@
 import utils.Logger as loggerz
-
-
+from utils.blockface_preproc import intensity_c, b_alignMRI
 
 
 def blockface_preproc():
-    logger=loggerz.get_logger()
-    logger.info('Macaca-Star pipeline start')
+    # intensity_c()
+    b_alignMRI()
+    b_to_T1_cyclegan()

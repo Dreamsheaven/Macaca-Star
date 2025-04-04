@@ -211,10 +211,11 @@ def inference(model, image_path, result_path, resample, resolution, patch_size_x
 
 
 
-YAML_PATH = os.getcwd() + '/config/fMOST_PI_config.yaml'
-fMOST_PI_CONFIG = yaml.safe_load(open(YAML_PATH, 'r'))
+
 
 def PI_to_T1_cyclegan():
+    YAML_PATH = os.getcwd() + '/config/fMOST_PI_config.yaml'
+    fMOST_PI_CONFIG = yaml.safe_load(open(YAML_PATH, 'r'))
     opt = TestOptions().parse()
     opt.image = fMOST_PI_CONFIG['output_dir']+'/reg/PI_alignNMT.nii.gz'
     opt.result =fMOST_PI_CONFIG['output_dir']+'/reg/T1likePI.nii.gz'
@@ -226,5 +227,8 @@ def PI_to_T1_cyclegan():
     inference(model, opt.image, opt.result, opt.resample, opt.new_resolution, opt.patch_size[0],
               opt.patch_size[1], opt.patch_size[2], opt.stride_inplane, opt.stride_layer, 1)
 
-
+def b_to_T1_cyclegan():
+    opt = TestOptions().parse()
+    YAML_PATH = os.getcwd() + '/config/fMOST_PI_config.yaml'
+    fMOST_PI_CONFIG = yaml.safe_load(open(YAML_PATH, 'r'))
 
