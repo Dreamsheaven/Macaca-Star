@@ -38,7 +38,7 @@ def atlas_reg_ByT1w():
                             reg_iterations=(40, 20, 0),flow_sigma=3,outprefix=fluor_CONFIG['output_dir']+'/reg3D/xfms/atlas_NMTtoT1w_')
     tmp_ = ants.apply_transforms(t1,tmp, tf1['fwdtransforms'],'bSpline')
     img__ = ants.copy_image_info(tmp_origin, ants.image_clone(tmp_))
-    img__.to_file(fluor_CONFIG['output_dir']+'/reg3D/atlas/TMP_inT1w.nii.gz')
+    img__.to_file(fluor_CONFIG['output_dir']+'/reg3D/atlas/NMT_inT1w.nii.gz')
 
     tf3 = ants.registration(t1,tsfer, 'SyN',
                             syn_metric='mattes',
@@ -53,7 +53,7 @@ def atlas_reg_ByT1w():
     tmp_=tf2['warpedmovout']
     tmp_ = ants.apply_transforms(tsfer, tmp_, tf3['invtransforms'], 'bSpline')
     img__ = ants.copy_image_info(tmp_origin, ants.image_clone(tmp_))
-    img__.to_file(fluor_CONFIG['output_dir']+'/reg3D/atlas/TMP_inT1likeblockface.nii.gz')
+    img__.to_file(fluor_CONFIG['output_dir']+'/reg3D/atlas/NMT_inT1likeblockface.nii.gz')
 
     ####################################################################
     atlas_ = ants.apply_transforms(t1, atlas, tf1['fwdtransforms'], 'multiLabel')
@@ -114,7 +114,7 @@ def atlas_reg_ByT1w():
 def atlas_reg_noT1w():
     tsfer = ants.image_read(fluor_CONFIG['output_dir']+'/reg3D/T1wlikeB_c.nii.gz')
     blockface=ants.image_read(fluor_CONFIG['output_dir']+'/reg3D/b_recon_oc_scale_alignMRI.nii.gz')
-    tmp_origin = ants.image_read('/media/zzb/data/data/macaque_imgs/NMT/LR_v2/NMT_v2.0_sym_SS_edit.nii.gz')
+    tmp_origin = ants.image_read('template/NMT/NMT_brain/NMT_v2.0_sym_SS.nii.gz')
     atlas = ants.image_read('template/NMT/NMT_brain/D99_atlas_in_NMT_cortex.nii.gz')
     atlas1 = ants.image_read('template/NMT/NMT_brain/CHARM_1_in_NMT_v2.0_sym.nii.gz')
     atlas2 = ants.image_read('template/NMT/NMT_brain/SARM_2_in_NMT_v2.0_sym.nii.gz')
@@ -142,8 +142,8 @@ def atlas_reg_noT1w():
 
     img_ = ants.apply_transforms(tmp, tsfer, tf1['invtransforms'], 'bSpline')
     img_=ants.copy_image_info(tmp_origin, img_)
-    img_.to_file(fluor_CONFIG['output_dir']+'/reg3D/atlas/T1PI_inNMT_noT1w.nii.gz')
+    img_.to_file(fluor_CONFIG['output_dir']+'/reg3D/atlas/T1PI_inNMT.nii.gz')
 
     blockface_ = ants.apply_transforms(tmp, blockface, tf1['invtransforms'], 'bSpline')
     blockface_ = ants.copy_image_info(tmp_origin, blockface_)
-    blockface_.to_file(fluor_CONFIG['output_dir']+'/reg3D/atlas/blockface_inNMT_noT1w.nii.gz')
+    blockface_.to_file(fluor_CONFIG['output_dir']+'/reg3D/atlas/blockface_inNMT.nii.gz')
