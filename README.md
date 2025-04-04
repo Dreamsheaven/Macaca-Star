@@ -51,6 +51,11 @@ Before running [fMOST_PI.py](./fMOST_PI.py) for registration, make sure to confi
 
 If you opt for the MRI-guided approach, please also configure the [MRI_config.yaml](./config/MRI_config.yaml) file accordingly.
 
+### Whole-brain registration for fluoresent sections
+Before running [fluor_sections.py](./fluor_sections.py) for registration, make sure to configure the necessary variables in the [fMOST_PI_config.yaml](./config/fMOST_PI_config.yaml) file.
+
+If you opt for the MRI-guided approach, please also configure the [MRI_config.yaml](./config/MRI_config.yaml) file accordingly.
+
 # License
 This work is licensed under a [Creative Commons Attribution 4.0 International License](http://creativecommons.org/licenses/by/4.0/).
 
