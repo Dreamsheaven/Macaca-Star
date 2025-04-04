@@ -1,0 +1,2 @@
+subject_dir: "example/fluor_sections/fluor.nii.gz"
+output_dir: 'example/fluor_sections'

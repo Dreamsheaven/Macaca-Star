@@ -10,9 +10,9 @@ def main():
     logger.info('Macaca-Star pipeline start')
     # MRI_preproc()
     blockface_preproc()
-    fluor_preproc()
+    # fluor_preproc()
 
 
 if __name__ == "__main__":
-    check_file_structure()
+    check_file_structure(2)
     main()

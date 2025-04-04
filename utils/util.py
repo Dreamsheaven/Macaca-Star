@@ -414,7 +414,7 @@ def atlas_reg_ByT1w():
     img_.to_file(fMOST_PI_CONFIG['output_dir'] + '/reg/atlas/T1w_inNMT.nii.gz')
 
     img_ = ants.apply_transforms(t1, tsfer, tf3['fwdtransforms'], 'bSpline')
-    img__ = ants.copy_image_info(tmp_origin, img_)
+    img__ = ants.copy_image_info(tmp_origin, ants.image_clone(img_))
     img__.to_file(fMOST_PI_CONFIG['output_dir'] + '/reg/atlas/T1PI_inT1w.nii.gz')
     img_ = ants.apply_transforms(t1, img_, tf2['invtransforms'], 'bSpline')
     img_ = ants.apply_transforms(tmp, img_, tf1['invtransforms'], 'bSpline')
@@ -422,7 +422,7 @@ def atlas_reg_ByT1w():
     img__.to_file(fMOST_PI_CONFIG['output_dir'] + '/reg/atlas/T1PI_inNMT.nii.gz')
 
     pi_ = ants.apply_transforms(t1, pi, tf3['fwdtransforms'], 'bSpline')
-    pi__ = ants.copy_image_info(tmp_origin, pi_)
+    pi__ = ants.copy_image_info(tmp_origin, ants.image_clone(pi_))
     pi__.to_file(fMOST_PI_CONFIG['output_dir'] + '/reg/atlas/PI_inT1w.nii.gz')
     pi_ = ants.apply_transforms(t1, pi_, tf2['invtransforms'], 'bSpline')
     pi_ = ants.apply_transforms(tmp, pi_, tf1['invtransforms'], 'bSpline')

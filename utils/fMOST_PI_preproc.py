@@ -178,9 +178,9 @@ def fMOST_PI_3Dreg():
     logger = loggerz.get_logger()
     logger.info('fMOST PI register to NMT')
     if MRI_CONFIG['MRI-guided']:
-        logger.WARNING('MRI-guided registration')
+        logger.warning('MRI-guided registration')
         atlas_reg_ByT1w()
     else:
-        logger.WARNING('no MRI-guided registration')
+        logger.warning('no MRI-guided registration')
         atlas_reg_noT1w()
 

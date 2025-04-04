@@ -13,5 +13,5 @@ def main():
 
 
 if __name__ == "__main__":
-    check_file_structure()
+    check_file_structure(1)
     main()

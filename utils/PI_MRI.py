@@ -12,14 +12,14 @@ from utils.fMOST_PI_preproc import tif_to_nii, normalize_to_8bit, denoise_img, r
 
 
 def PI_preproc():
-    tif_to_nii()
-    normalize_to_8bit()
-    mas_cerebellum()
-    remove_artifact()
-    denoise_img()
-    intensity_c()
-    clahe_image()
-    PI_alignNMT()
+    # tif_to_nii()
+    # normalize_to_8bit()
+    # mas_cerebellum()
+    # remove_artifact()
+    # denoise_img()
+    # intensity_c()
+    # clahe_image()
+    # PI_alignNMT()
     PI_to_T1_cyclegan()
     correct_T1like()
     fMOST_PI_3Dreg()
