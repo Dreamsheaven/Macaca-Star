@@ -228,7 +228,17 @@ def PI_to_T1_cyclegan():
               opt.patch_size[1], opt.patch_size[2], opt.stride_inplane, opt.stride_layer, 1)
 
 def b_to_T1_cyclegan():
+    YAML_PATH = os.getcwd() + '/config/fluor_sections_config.yaml'
+    fluor_CONFIG = yaml.safe_load(open(YAML_PATH, 'r'))
     opt = TestOptions().parse()
-    YAML_PATH = os.getcwd() + '/config/fMOST_PI_config.yaml'
-    fMOST_PI_CONFIG = yaml.safe_load(open(YAML_PATH, 'r'))
-
+    opt.name = 'Blockface2NMT'
+    opt.netG = 'resnet_7blocks'
+    opt.ngf = 48
+    opt.ndf = 48
+    opt.image = fluor_CONFIG['output_dir']+'/reg3D/b_recon_oc_scale_alignMRI.nii.gz'
+    opt.result =fluor_CONFIG['output_dir']+'/reg3D/T1likeBlockface.nii.gz'
+    opt.checkpoints_dir = os.getcwd() + '/checkpoints'
+    model = create_model(opt)
+    model.setup(opt)
+    inference(model, opt.image, opt.result, opt.resample, opt.new_resolution, opt.patch_size[0],
+              opt.patch_size[1], opt.patch_size[2], opt.stride_inplane, opt.stride_layer, 1)

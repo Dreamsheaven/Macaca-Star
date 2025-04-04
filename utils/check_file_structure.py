@@ -47,5 +47,9 @@ def check_file_structure(type):
             os.mkdir(fluor_config['output_dir']+'/reg3D')
         if not os.path.exists(fluor_config['output_dir']+'/reg3D/xfms'):
             os.mkdir(fluor_config['output_dir']+'/reg3D/xfms')
+        if not os.path.exists(fluor_config['output_dir']+'/reg3D/atlas'):
+            os.mkdir(fluor_config['output_dir']+'/reg3D/atlas')
+        if not os.path.exists(fluor_config['output_dir']+'/blockface/atlas'):
+            os.mkdir(fluor_config['output_dir']+'/blockface/atlas')
 
 

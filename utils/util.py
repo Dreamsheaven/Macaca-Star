@@ -444,7 +444,7 @@ def atlas_reg_noT1w():
     tsfer, pi, tmp, atlas, atlas3, atlas4 = reset_img([tsfer, pi, tmp_, atlas, atlas3, atlas4])
     tf = ants.registration(tsfer,tmp, 'SyN',
                             syn_metric='mattes',
-                            reg_iterations=(40, 20, 0),flow_sigma=3)
+                            reg_iterations=(40, 40, 40),flow_sigma=3)
     tf['warpedmovout'].to_file(fMOST_PI_CONFIG['output_dir'] + '/reg/atlas/TMP_inPI.nii.gz')
     ####################################################################
     atlas_ = ants.apply_transforms(pi, atlas, tf['fwdtransforms'], 'multiLabel')
