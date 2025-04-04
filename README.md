@@ -46,13 +46,13 @@ conda env create -f enviroment.yml
 ### Download Checkpoints
 Download the model [checkpoints](./checkpoints). All model checkpoints are saved in the "checkpoints" folder within the program directory.
 
-### Whole-brain registration for the fMOST PI modality
+### Whole-brain registration of the fMOST PI modality
 Before running [fMOST_PI.py](./fMOST_PI.py) for registration, make sure to configure the necessary variables in the [fMOST_PI_config.yaml](./config/fMOST_PI_config.yaml) file.
 
 If you opt for the MRI-guided approach, please also configure the [MRI_config.yaml](./config/MRI_config.yaml) file accordingly.
 
-### Whole-brain registration for fluoresent sections
-Before running [fluor_sections.py](./fluor_sections.py) for registration, make sure to configure the necessary variables in the [fMOST_PI_config.yaml](./config/fMOST_PI_config.yaml) file.
+### Whole-brain registration of fluorescent sections
+Before running [fluor_sections.py](./fluor_sections.py) for registration, make sure to configure the necessary variables in the [fluor_sections_config.yaml](./config/fluor_sections_config.yaml) and [blockface_config.yaml](./config/blockface_config.yaml)files.
 
 If you opt for the MRI-guided approach, please also configure the [MRI_config.yaml](./config/MRI_config.yaml) file accordingly.
 
