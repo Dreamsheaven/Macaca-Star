@@ -30,9 +30,10 @@ def atlas_reg_ByT1w():
     atlas = ants.image_read('template/NMT/NMT_brain/D99_atlas_in_NMT_cortex.nii.gz')
     atlas1 = ants.image_read('template/NMT/NMT_brain/CHARM_1_in_NMT_v2.0_sym.nii.gz')
     atlas2 = ants.image_read('template/NMT/NMT_brain/SARM_2_in_NMT_v2.0_sym.nii.gz')
+    atlas3 = ants.image_read('template/NMT/NMT_brain/NMT_v2.0_sym_segmentation_edit.nii.gz')
     atlas4 = ants.image_read('template/NMT/NMT_brain/NMT_v2.0_sym_cerebellum_mask.nii.gz')
     atlas5 = ants.image_read('template/NMT/NMT_brain/NMT_v2.0_sym_segmentation.nii.gz')
-    t1, tsfer, blockface, tmp, atlas, atlas1, atlas2,atlas4,atlas5 = reset_img([t1, tsfer, blockface, tmp_origin, atlas, atlas1, atlas2,atlas4,atlas5])
+    t1, tsfer, blockface, tmp, atlas, atlas1, atlas2,atlas3,atlas4,atlas5 = reset_img([t1, tsfer, blockface, tmp_origin, atlas, atlas1, atlas2,atlas3,atlas4,atlas5])
     tf1 = ants.registration(t1,tmp, 'SyN',
                             syn_metric='mattes',
                             reg_iterations=(40, 20, 0),flow_sigma=3,outprefix=fluor_CONFIG['output_dir']+'/reg3D/xfms/atlas_NMTtoT1w_')
@@ -73,6 +74,14 @@ def atlas_reg_ByT1w():
     atlas2_ = ants.apply_transforms(tsfer_, atlas2_, tf2['fwdtransforms'], 'multiLabel')
     atlas2_ = ants.apply_transforms(tsfer, atlas2_, tf3['invtransforms'], 'multiLabel')
     atlas2_.to_file(fluor_CONFIG['output_dir']+'/reg3D/atlas/SARM2_inblockface.nii.gz')
+
+    atlas3_ = ants.apply_transforms(t1, atlas3, tf1['fwdtransforms'], 'genericLabel')
+    img__ = ants.copy_image_info(tmp_origin, ants.image_clone(atlas3_))
+    img__.to_file(fluor_CONFIG['output_dir']+'/reg3D/atlas/segmentation_edit_inT1w.nii.gz')
+    atlas3_ = ants.apply_transforms(tsfer_, atlas3_, tf2['fwdtransforms'], 'genericLabel')
+    atlas3_ = ants.apply_transforms(tsfer, atlas3_, tf3['invtransforms'], 'genericLabel')
+    img__ = ants.copy_image_info(tmp_origin, ants.image_clone(atlas3_))
+    img__.to_file(fluor_CONFIG['output_dir']+'/reg3D/atlas/segmentation_edit_inblockface.nii.gz')
 
     atlas4_ = ants.apply_transforms(t1, atlas4, tf1['fwdtransforms'], 'genericLabel')
     img__ = ants.copy_image_info(tmp_origin, ants.image_clone(atlas4_))
@@ -118,9 +127,10 @@ def atlas_reg_noT1w():
     atlas = ants.image_read('template/NMT/NMT_brain/D99_atlas_in_NMT_cortex.nii.gz')
     atlas1 = ants.image_read('template/NMT/NMT_brain/CHARM_1_in_NMT_v2.0_sym.nii.gz')
     atlas2 = ants.image_read('template/NMT/NMT_brain/SARM_2_in_NMT_v2.0_sym.nii.gz')
+    atlas3 = ants.image_read('template/NMT/NMT_brain/NMT_v2.0_sym_segmentation_edit.nii.gz')
     atlas4 = ants.image_read('template/NMT/NMT_brain/NMT_v2.0_sym_cerebellum_mask.nii.gz')
     atlas5 = ants.image_read('template/NMT/NMT_brain/NMT_v2.0_sym_segmentation.nii.gz')
-    tsfer, blockface, tmp, atlas, atlas1, atlas2, atlas4, atlas5 = reset_img([tsfer, blockface, tmp_origin, atlas, atlas1, atlas2, atlas4, atlas5])
+    tsfer, blockface, tmp, atlas, atlas1, atlas2,atlas3, atlas4, atlas5 = reset_img([tsfer, blockface, tmp_origin, atlas, atlas1, atlas2,atlas3, atlas4, atlas5])
     tf1 = ants.registration(tsfer,tmp, 'SyN',
                             syn_metric='mattes',
                             reg_iterations=(40, 40, 40),flow_sigma=3,outprefix=fluor_CONFIG['output_dir']+'/reg3D/xfms/atlas_PItoNMT_')
@@ -133,6 +143,9 @@ def atlas_reg_noT1w():
 
     atlas2_ = ants.apply_transforms(tsfer, atlas2, tf1['fwdtransforms'], 'multiLabel')
     atlas2_.to_file(fluor_CONFIG['output_dir']+'/reg3D/atlas/SARM2_inblockface.nii.gz')
+
+    atlas3_ = ants.apply_transforms(tsfer, atlas3, tf1['fwdtransforms'], 'multiLabel')
+    atlas3_.to_file(fluor_CONFIG['output_dir']+'/reg3D/atlas/segmentation_edit_inblockface.nii.gz')
 
     atlas4_ = ants.apply_transforms(tsfer, atlas4, tf1['fwdtransforms'], 'genericLabel')
     atlas4_.to_file(fluor_CONFIG['output_dir']+'/reg3D/atlas/cerebellum_mask_inblockface.nii.gz')

@@ -115,17 +115,23 @@ def b_invetalignMRI():
 
 
 def repair_blockface():
-    b=ants.image_read(fluor_CONFIG['output_dir']+'/blockface/b_recon_oc_scale.nii.gz')
+    b=ants.image_read(fluor_CONFIG['output_dir']+'/blockface/b_recon_oc_scale_clahe.nii.gz')
     seg = ants.image_read(fluor_CONFIG['output_dir']+'/blockface/atlas/segmentation_inOriginB.nii.gz')
     cere_mask = ants.image_read(fluor_CONFIG['output_dir']+'/blockface/atlas/cerebellum_mask_inOriginB.nii.gz')
     b_rmc=b-ants.mask_image(b,cere_mask,1)
     b_rmc_mask=ants.get_mask(b_rmc)
+    b_rmc_mask=ants.morphology(b_rmc_mask,'erode',2)
+    b_rmc_mask = ants.morphology(b_rmc_mask, 'dilate',2)
     b_rmc=ants.mask_image(b_rmc,b_rmc_mask,1)
-
+    b_rmc.to_file(fluor_CONFIG['output_dir']+'/blockface/b_recon_oc_scale_rmc.nii.gz')
+    seg = ants.morphology(seg, 'erode', 1)
     seg_data=seg.numpy()
-    seg_data[:,0:28,:]=0
+    # seg_data[:,0:28,:]=0
     seg[:,:,:]=seg_data
+    b_rmc_repair=b_rmc-ants.mask_image(b_rmc,seg,[1,5])
+    b_rmc_repair_mask = ants.get_mask(b_rmc_repair)
+    b_rmc_repair_mask=ants.morphology(b_rmc_repair_mask,'erode',2)
+    b_rmc_repair_mask = ants.morphology(b_rmc_repair_mask, 'dilate',2)
+    b_rmc_repair = ants.mask_image(b_rmc_repair, b_rmc_repair_mask, 1)
+    b_rmc_repair.to_file(fluor_CONFIG['output_dir']+'/blockface/b_recon_oc_scale_rmc_repair.nii.gz')
 
-    b_=b-ants.mask_image(b,seg,1)
-    b_.to_file(fluor_CONFIG['output_dir']+'/blockface/b_recon_oc_scale_edit.nii.gz')
-    b_c.to_file(fluor_CONFIG['output_dir']+'/blockface/b_recon_oc_scale_edit_rmc.nii.gz')
