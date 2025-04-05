@@ -56,7 +56,7 @@ Before running [fluor_sections.py](./fluor_sections.py) for registration, make s
 
 If you opt for the MRI-guided approach, please also configure the [MRI_config.yaml](./config/MRI_config.yaml) file accordingly.
 
-***All atlas results generated through Macaca-Star registration are saved in the atlas folder.**
+**All atlas results generated through Macaca-Star registration are saved in the atlas folder.**
 
 # License
 This work is licensed under a [Creative Commons Attribution 4.0 International License](http://creativecommons.org/licenses/by/4.0/).
