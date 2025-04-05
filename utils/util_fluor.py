@@ -7,10 +7,11 @@
 @Date    ：2025/3/1
 """
 import os
-
+import matplotlib.pyplot as plt
 import ants
+import cv2
+import numpy as np
 import yaml
-
 from utils.util import reset_img
 
 blockface_YAML_PATH = os.getcwd() + '/config/blockface_config.yaml'
@@ -160,3 +161,53 @@ def atlas_reg_noT1w():
     blockface_ = ants.apply_transforms(tmp, blockface, tf1['invtransforms'], 'bSpline')
     blockface_ = ants.copy_image_info(tmp_origin, blockface_)
     blockface_.to_file(fluor_CONFIG['output_dir']+'/reg3D/atlas/blockface_inNMT.nii.gz')
+
+
+def get_fslice_mask(img,hole_size=50):
+    isPlot=False
+    kernel2 = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))  # ksize=5,5
+    image = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+    shifted = cv2.pyrMeanShiftFiltering(image, 21, 51)
+    img = cv2.cvtColor(shifted, cv2.COLOR_RGB2GRAY)
+    # gray = util.invert(img)
+    gray=img
+    ret, mask = cv2.threshold(gray, 10, 255,  cv2.THRESH_BINARY)
+    threshod_image_erode = cv2.erode(mask, kernel2, iterations=1)
+
+    contours, _ = cv2.findContours(threshod_image_erode, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    cv_contours = []
+    for contour in contours:
+        area = cv2.contourArea(contour)
+        if area <= hole_size:
+            cv_contours.append(contour)
+        else:
+            continue
+    threshod_image_erode=cv2.fillPoly(threshod_image_erode, cv_contours, 255)
+    plot_show(gray, threshod_image_erode, isPlot)
+    ret, threshod_image = cv2.threshold(gray, 10, 255, cv2.THRESH_BINARY+ cv2.THRESH_OTSU)
+    threshod_image=threshod_image_erode+threshod_image
+    plot_show(gray, threshod_image, isPlot)
+    threshod_image[threshod_image>0]=255
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    opening = cv2.morphologyEx(threshod_image, cv2.MORPH_OPEN, kernel, iterations=2)
+    plot_show(img, opening, isPlot)
+    mask=opening
+    mask[mask>0]=1
+    return mask
+
+
+def plot_show(image,image2,isPlot=False):
+    if isPlot:
+        fig = plt.figure(figsize=(12, 8), dpi=100)
+        ax1 = fig.add_subplot(1, 2, 1)
+        ax1.imshow(image,cmap='gray')
+        ax1.set_title('image')
+
+        ax2 = fig.add_subplot(1, 2, 2)
+        ax2.imshow(image2,cmap='gray')
+        ax2.set_title('segmentation')
+        plt.show()
+
+def normalization(data):
+    _range = np.max(data) - np.min(data)
+    return (data - np.min(data)) / _range

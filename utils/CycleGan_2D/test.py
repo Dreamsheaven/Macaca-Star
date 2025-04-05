@@ -44,7 +44,7 @@ def fluor_toB_cyclegan():
         img_data=np.array(img)
         blikef[:,i,:]=img_data
         logger.info('section :'+str(i))
-    blikef.to_file(fluor_CONFIG['output_dir']+'/fluor/Blikef.nii.gz')
+    blikef.to_file(fluor_CONFIG['output_dir']+'/fluor/blike_f.nii.gz')
 
 
 
