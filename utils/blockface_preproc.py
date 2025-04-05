@@ -130,7 +130,6 @@ def repair_blockface():
     b_rmc.to_file(fluor_CONFIG['output_dir']+'/blockface/b_recon_oc_scale_rmc.nii.gz')
     seg = ants.morphology(seg, 'erode', 1)
     seg_data=seg.numpy()
-    # seg_data[:,0:28,:]=0
     seg[:,:,:]=seg_data
     b_rmc_repair=b_rmc-ants.mask_image(b_rmc,seg,[1,5])
     b_rmc_repair_mask = ants.get_mask(b_rmc_repair)
