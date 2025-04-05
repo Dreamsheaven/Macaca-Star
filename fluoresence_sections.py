@@ -9,8 +9,8 @@ from utils.fluor_blockface import fluor_preproc
 def main():
     logger=loggerz.get_logger()
     logger.info('Macaca-Star pipeline start')
-    MRI_preproc()
-    blockface_preproc()
+    # MRI_preproc()
+    # blockface_preproc()
     fluor_preproc()
 
 
