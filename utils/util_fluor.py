@@ -12,7 +12,11 @@ import ants
 import cv2
 import numpy as np
 import yaml
-from utils.util import reset_img
+from skimage import util
+import imutils
+from utils.util import reset_img, touint8
+from scipy.spatial.distance import cdist
+
 
 blockface_YAML_PATH = os.getcwd() + '/config/blockface_config.yaml'
 blockface_CONFIG = yaml.safe_load(open(blockface_YAML_PATH, 'r'))
@@ -211,3 +215,214 @@ def plot_show(image,image2,isPlot=False):
 def normalization(data):
     _range = np.max(data) - np.min(data)
     return (data - np.min(data)) / _range
+
+
+def get_maskBywatershed(img):
+    isPlot=False
+    gray = util.invert(img)
+    image = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+    # gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+    ret, threshod_image = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    # ret, threshod_image = cv2.threshold(gray, 0, 255, cv2.THRESH_TRIANGLE)
+    plot_show(img, threshod_image, isPlot)
+    kernel2 = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))  # ksize=5,5 3,3
+    threshod_image_erode = cv2.erode(threshod_image, kernel2, iterations=1)
+    threshod_image = fill_hole(threshod_image_erode)+threshod_image
+    threshod_image[threshod_image>0]=255
+
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    opening = cv2.morphologyEx(threshod_image, cv2.MORPH_OPEN, kernel, iterations=2)
+    print('MORPH_OPEN')
+    plot_show(img, opening, isPlot)
+    # opening=threshod_image
+    dist_transform = cv2.distanceTransform(opening, cv2.DIST_L2, 5)
+    # Normalize the distance image for range = {0.0, 1.0}
+    cv2.normalize(dist_transform, dist_transform, 0, 1.0, cv2.NORM_MINMAX)
+    dist_transform_threshold_image = dist_transform.copy()
+    print('dist_transform_threshold_image')
+    plot_show(img, dist_transform_threshold_image, isPlot)
+    # dist_transform_threshold_image[dist_transform_threshold_image < 0.1] = 0
+    # dist_transform_threshold_image[dist_transform_threshold_image >= 0.1] = 255
+    dist_transform_threshold_image[dist_transform_threshold_image < 0.03] = 0
+    dist_transform_threshold_image[dist_transform_threshold_image >= 0.03] = 255
+    dist_transform_threshold_image = touint8(dist_transform_threshold_image)
+
+    dilate_image = cv2.dilate(opening, kernel, iterations=2)
+    unknown = cv2.subtract(dilate_image, dist_transform_threshold_image)
+
+    ret2, markers = cv2.connectedComponents(dist_transform_threshold_image)
+    markers = markers + 1
+    markers[unknown == 255] = 0
+    markers_copy = markers.copy()
+    markers_copy[markers == 0] = 150
+    markers_copy[markers == 1] = 0
+    markers_copy[markers > 1] = 255
+    markers = cv2.watershed(image, markers)
+
+    mask = np.zeros_like(gray, dtype=np.uint8)
+    for obj_id in np.unique(markers):
+        if obj_id == 0:
+            continue
+        if obj_id == -1:
+            mask[markers == obj_id] = 1
+            continue
+        mask[markers == obj_id] = obj_id
+    plot_show(img, mask,isPlot)
+    return mask
+
+
+def fill_hole(img):
+
+    mask = 255 - img
+    marker = np.zeros_like(img)
+    marker[0, :] = 255
+    marker[-1, :] = 255
+    marker[:, 0] = 255
+    marker[:, -1] = 255
+
+    SE = cv2.getStructuringElement(shape=cv2.MORPH_CROSS, ksize=(3, 3))
+    count = 0
+    while True:
+        count += 1
+        marker_pre = marker
+        dilation = cv2.dilate(marker, kernel=SE)
+        marker = np.min((dilation, mask), axis=0)
+        if (marker_pre == marker).all():
+            break
+    dst = 255 - marker
+    return dst
+
+def centerxy_img(image):
+    image[image < 0] = 0
+    image = image.astype(np.uint8)
+    thresh = cv2.threshold(image, 20, 255, cv2.THRESH_BINARY)[1]
+    cnts = cv2.findContours(thresh.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    cnts = imutils.grab_contours(cnts)
+    xs = []
+    ys = []
+    # loop over the contours
+    for c in cnts:
+        # compute the center of the contour
+        M = cv2.moments(c)
+        if not M["m00"] == 0:
+            cX = int(M["m10"] / M["m00"])
+            xs.append(cX)
+            cY = int(M["m01"] / M["m00"])
+            ys.append(cY)
+    try:
+        x = int(np.mean(xs))
+        y = int(np.mean(ys))
+    except:
+        x=0
+        y=0
+    return x, y
+
+
+def syn_toB_bySeg(b_img,b_mask,bf_img,bf_mask,b_seg,index):
+    dis=40
+    b_mask_tmp=None
+    b_clist = []
+    f_clist = []
+    matched_pairs = {}
+    if len(np.unique(bf_mask))!=len(np.unique(b_mask)):
+        if len(np.unique(bf_mask))==len(np.unique(b_seg)):
+            b_mask_tmp=b_seg
+            n=1
+            for i in np.unique(b_mask_tmp):
+                b_mask_tmp[b_mask_tmp==i]=n
+                n=n+1
+        elif len(np.unique(bf_mask))> len(np.unique(b_seg)):
+            bf_clist = []
+            for i in np.unique(bf_mask):
+                bf_mask_ = bf_mask.copy()
+                bf_mask_[bf_mask != i] = 0
+                bfx, bfy = centerxy_img(bf_mask_ * 35)
+                if not (bfx == 0 and bfy == 0):
+                    if bfy>=400:
+                        bf_mask[bf_mask==bf_mask_[bfy,bfx]]=1
+                    else:
+                        bf_clist.append((bfx, bfy))
+            if len(np.unique(bf_mask))> len(np.unique(b_seg)):
+                bf_distances = cdist(bf_clist, bf_clist)
+                np.fill_diagonal(bf_distances, np.inf)
+                min_distance = np.min(bf_distances)
+                min_indices = np.unravel_index(np.argmin(bf_distances), bf_distances.shape)
+                point1 = bf_clist[min_indices[0]]
+                point2 = bf_clist[min_indices[1]]
+                bf_mask[bf_mask==bf_mask[point2[1],point2[0]]]=bf_mask[point1[1],point1[0]]
+                if len(np.unique(bf_mask))==len(np.unique(b_mask)):
+                    b_mask_tmp = b_mask
+                else:
+                    b_mask_tmp = b_seg
+                    n = 1
+                    for i in np.unique(b_mask_tmp):
+                        b_mask_tmp[b_mask_tmp == i] = n
+                        n = n + 1
+            else:
+                b_mask_tmp=b_seg
+                n = 1
+                for i in np.unique(b_mask_tmp):
+                    b_mask_tmp[b_mask_tmp == i] = n
+                    n = n + 1
+        elif len(np.unique(bf_mask)) < len(np.unique(b_seg)):
+            b_mask_tmp = b_mask
+            b_mask_tmp[b_mask_tmp>1]=2
+            bf_mask[bf_mask>1]=2
+    else:
+        b_mask_tmp=b_mask
+    for i in np.unique(bf_mask):
+        if i != 1:
+            b_mask_ = b_mask_tmp.copy()
+            f_mask_ = bf_mask.copy()
+            b_mask_[b_mask_tmp != i] = 0
+            f_mask_[bf_mask != i] = 0
+            bx, by = centerxy_img(b_mask_ * 35)
+            fx, fy = centerxy_img(f_mask_ * 35)
+            if not (bx == 0 and by == 0):
+                b_clist.append((bx, by))
+            if not (fx == 0 and fy == 0):
+                f_clist.append((fx, fy))
+    b_clist = np.array(b_clist)
+    f_clist = np.array(f_clist)
+    distances = cdist(f_clist,b_clist)
+    matched_f_points = {}
+    for i, f_point in enumerate(f_clist):
+        for j, b_point in enumerate(b_clist):
+            if distances[i, j] <= dis:
+                f_point_tuple = tuple(f_point)
+                if f_point_tuple not in matched_f_points or distances[i, j] < matched_f_points[f_point_tuple]:
+                    matched_pairs[f_point_tuple] = b_point
+                    matched_f_points[f_point_tuple] = distances[i, j]
+    keys=list(matched_pairs.keys())
+    label=22
+    for i in range(len(keys)):
+        # bf_mask[bf_mask==bf_mask[keys[i][1],keys[i][0]]]=label
+        # b_mask_tmp[b_mask_tmp == b_mask_tmp[matched_pairs[keys[i]][1], matched_pairs[keys[i]][0]]] = label
+        bf_mask=center_editmask(bf_mask,keys[i][0],keys[i][1],label)
+        b_mask_tmp = center_editmask(b_mask_tmp, matched_pairs[keys[i]][0], matched_pairs[keys[i]][1], label)
+        label=label+10
+    plot_show(b_mask_tmp[:, :],bf_mask, True)
+    cv2.imwrite(fluor_CONFIG['output_dir']+ '/reg2D/xfms/masks/bslice_mask' + str(index) + '.tif', b_mask_tmp)
+    cv2.imwrite(fluor_CONFIG['output_dir']+ '/reg2D/xfms/masks/tfslice_mask' + str(index) + '.tif', bf_mask)
+
+
+def center_editmask(mask,x,y,value):
+    if mask[y,x]==1:
+        tmp = np.zeros((500, 500))
+        tmp[y - 10:y + 10, x - 10: x + 10] = 1
+        tmp = tmp * mask
+        tmplist = np.unique(tmp)
+        tmplist.sort()
+        if len(tmplist) == 3:
+            mask[mask == tmplist[2]] = value
+        else:
+            tmp = np.zeros((500, 500))
+            tmp[y - 10:y + 10, x - 10: x + 10] = 1
+            tmp = tmp * mask
+            tmplist = np.unique(tmp)
+            tmplist.sort()
+            if len(tmplist) == 3:
+                mask[mask == tmplist[2]] = value
+    else:
+        mask[mask == mask[y, x]] = value
+    return mask

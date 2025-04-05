@@ -53,6 +53,12 @@ def check_file_structure(type):
             os.mkdir(fluor_config['output_dir']+'/blockface/atlas')
         if not os.path.exists(fluor_config['output_dir']+'/fluor'):
             os.mkdir(fluor_config['output_dir']+'/fluor')
+        if not os.path.exists(fluor_config['output_dir']+'/reg2D'):
+            os.mkdir(fluor_config['output_dir']+'/reg2D')
+        if not os.path.exists(fluor_config['output_dir']+'/reg2D/xfms'):
+            os.mkdir(fluor_config['output_dir']+'/reg2D/xfms')
+        if not os.path.exists(fluor_config['output_dir']+'/reg2D/xfms/masks'):
+            os.mkdir(fluor_config['output_dir']+'/reg2D/xfms/masks')
         if error:
             sys.exit(1)
 

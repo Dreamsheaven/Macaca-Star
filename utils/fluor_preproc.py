@@ -6,7 +6,8 @@ import yaml
 from skimage import util
 import albumentations as A
 from utils.util import touint8
-from utils.util_fluor import get_fslice_mask, plot_show, normalization
+from utils.util_fluor import get_fslice_mask, plot_show, normalization, get_maskBywatershed, syn_toB_bySeg
+from visdom import Visdom
 
 fluor_YAML_PATH = os.getcwd() + '/config/fluor_sections_config.yaml'
 fluor_CONFIG = yaml.safe_load(open(fluor_YAML_PATH, 'r'))
@@ -61,3 +62,39 @@ def repaire_blikefluo():
         tf_[:, i, :]=tf_slice_.numpy()
         tf_aug[:, i, :] = tf_augtmp.copy()
     ants.image_write(tf_aug,fluor_CONFIG['output_dir']+'/fluor/blikef_repair2D_aug.nii.gz')
+
+
+def fluor_SyNtoB_bySeg():
+    isPlot=True
+    # viz = Visdom(env='slice2D_fluo_affinetoB')
+    b = ants.image_read(fluor_CONFIG['output_dir']+'/blockface/b_recon_oc_scale_rmc_repair.nii.gz')
+    tf = ants.image_read(fluor_CONFIG['output_dir']+ '/fluor/blikef_repair2D_aug.nii.gz')
+    b_seg = ants.image_read(fluor_CONFIG['output_dir'] + '/blockface/atlas/segmentation_edit_inOriginB_.nii.gz')
+    tf_=ants.new_image_like(tf,tf.numpy())
+    tf_[:, :, :] = 0
+    # for index in range(0, tf.shape[1]):
+    for index in range(58,59):
+        print(index)
+        tf_[:,index,:]=0
+        bslice = touint8(b.numpy()[:, index, :])
+        tfslice = touint8(tf.numpy()[:, index, :])
+        bslice = np.rot90(bslice).copy()
+        tfslice = np.rot90(tfslice).copy()
+        bsliceimg = ants.from_numpy(bslice)
+        tfsliceimg = ants.from_numpy(tfslice)
+        result1 = ants.registration(bsliceimg, tfsliceimg, 'Similarity', aff_metric='GC',outprefix=fluor_CONFIG['output_dir']+ '/reg2D/xfms/ftob_affine_iter1_'+str(index)+'_')
+        tfsliceimg = ants.apply_transforms(bsliceimg, tfsliceimg, result1['fwdtransforms'],'bSpline')
+        tfslice = tfsliceimg.numpy().copy()
+        bmask = bslice.copy()
+        tfmask = tfslice.copy()
+        bmask[bmask > 50] = 100
+        tfmask[tfmask > 50] = 100
+        bslice_mask = get_maskBywatershed(bmask)
+        tfslice_mask = get_maskBywatershed(tfmask)
+        bslice_mask[bslice_mask == 0] = 1
+        tfslice_mask[tfslice_mask == 0] = 1
+        plot_show(bslice_mask,tfslice_mask,isPlot)
+        syn_toB_bySeg(bsliceimg,bslice_mask,tfsliceimg,tfslice_mask,np.rot90(b_seg[:,index,:].numpy()),index)
+
+
+
