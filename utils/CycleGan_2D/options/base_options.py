@@ -1,6 +1,4 @@
 import argparse
-import os
-from utils.CycleGan_2D.util import util
 import torch
 from utils.CycleGan_2D import models
 from utils.CycleGan_2D import data
@@ -88,30 +86,7 @@ class BaseOptions():
         self.parser = parser
         return parser.parse_args()
 
-    def print_options(self, opt):
-        """Print and save options
 
-        It will print both current options and default values(if different).
-        It will save options into a text file / [checkpoints_dir] / opt.txt
-        """
-        message = ''
-        message += '----------------- Options ---------------\n'
-        for k, v in sorted(vars(opt).items()):
-            comment = ''
-            default = self.parser.get_default(k)
-            if v != default:
-                comment = '\t[default: %s]' % str(default)
-            message += '{:>25}: {:<30}{}\n'.format(str(k), str(v), comment)
-        message += '----------------- End -------------------'
-        print(message)
-
-        # save to the disk
-        expr_dir = os.path.join(opt.checkpoints_dir, opt.name)
-        util.mkdirs(expr_dir)
-        file_name = os.path.join(expr_dir, '{}_opt.txt'.format(opt.phase))
-        with open(file_name, 'wt') as opt_file:
-            opt_file.write(message)
-            opt_file.write('\n')
 
     def parse(self):
         """Parse our options, create checkpoints directory suffix, and set up gpu device."""
@@ -122,8 +97,6 @@ class BaseOptions():
         if opt.suffix:
             suffix = ('_' + opt.suffix.format(**vars(opt))) if opt.suffix != '' else ''
             opt.name = opt.name + suffix
-
-        self.print_options(opt)
 
         # set gpu ids
         str_ids = opt.gpu_ids.split(',')

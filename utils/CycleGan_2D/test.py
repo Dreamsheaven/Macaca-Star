@@ -1,10 +1,24 @@
 import os
+import numpy as np
 from utils.CycleGan_2D.options.test_options import TestOptions
-from utils.CycleGan_2D.data import create_dataset
 from utils.CycleGan_2D.models import create_model
+from utils.CycleGan_2D.data.base_dataset import get_transform
+import ants
+import yaml
+from PIL import Image
+import utils.Logger as loggerz
+
+fluor_YAML_PATH = os.getcwd() + '/config/fluor_sections_config.yaml'
+fluor_CONFIG = yaml.safe_load(open(fluor_YAML_PATH, 'r'))
 
 
 def fluor_toB_cyclegan():
+    logger=loggerz.get_logger()
+    logger.info('fluor to Blockface by 2d cyclegan')
+    fluor=ants.image_read(fluor_CONFIG['subject_dir'])
+    fluor_data=fluor.numpy()
+    blikef=ants.image_clone(fluor)
+    blikef[:,:,:]=0
     opt = TestOptions().parse()
     opt.num_threads = 0   # test code only supports num_threads = 0
     opt.batch_size = 1    # test code only supports batch_size = 1
@@ -14,16 +28,23 @@ def fluor_toB_cyclegan():
     opt.no_flip = True    # no flip; comment this line if results on flipped images are needed.
     opt.display_id = -1
     opt.no_dropout = True # no visdom display; the test code saves the results to a HTML file.
-    dataset = create_dataset(opt)  # create a dataset given opt.dataset_mode and other options
     model = create_model(opt)      # create a model given opt.model and other options
     model.setup(opt)
-    for i, data in enumerate(dataset):
-        if i >= opt.num_test:  # only apply our model to opt.num_test images.
-            break
-        model.set_input(data)  # unpack data from data loader
+    transform=get_transform(opt, grayscale=True)
+    for i in range(0,fluor.shape[1]):
+        img=Image.fromarray(fluor_data[:,i,:]).convert('RGB')
+        img=img.resize((256,256))
+        img_tensor=transform(img)
+        model.set_input({'A': img_tensor, 'A_paths': []})  # unpack data from data loader
         model.test()           # run inference
-        visuals = model.get_current_visuals()  # get image results
-
+        visuals = model.get_current_visuals()
+        img_data=visuals['fake'][0].cpu().float().numpy()*255
+        img=Image.fromarray(img_data)
+        img = img.resize((500, 500))
+        img_data=np.array(img)
+        blikef[:,i,:]=img_data
+        logger.info('section :'+str(i))
+    blikef.to_file(fluor_CONFIG['output_dir']+'/fluor/Blikef.nii.gz')
 
 
 

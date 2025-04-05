@@ -51,6 +51,8 @@ def check_file_structure(type):
             os.mkdir(fluor_config['output_dir']+'/reg3D/atlas')
         if not os.path.exists(fluor_config['output_dir']+'/blockface/atlas'):
             os.mkdir(fluor_config['output_dir']+'/blockface/atlas')
+        if not os.path.exists(fluor_config['output_dir']+'/fluor'):
+            os.mkdir(fluor_config['output_dir']+'/fluor')
         if error:
             sys.exit(1)
 
