@@ -81,7 +81,8 @@ def b_invetalignMRI():
     atlas2 = ants.image_read(fluor_CONFIG['output_dir']+'/reg3D/atlas/SARM2_inblockface.nii.gz')
     atlas4 = ants.image_read(fluor_CONFIG['output_dir']+'/reg3D/atlas/cerebellum_mask_inblockface.nii.gz')
     atlas6 = ants.image_read(fluor_CONFIG['output_dir']+'/reg3D/atlas/CHARM1_inblockface.nii.gz')
-    nmt = ants.image_read(fluor_CONFIG['output_dir']+'/reg3D/atlas/TMP_inT1likeblockface.nii.gz')
+    atlas7 = ants.image_read(fluor_CONFIG['output_dir'] + '/reg3D/atlas/segmentation_edit_inblockface.nii.gz')
+    nmt = ants.image_read(fluor_CONFIG['output_dir']+'/reg3D/atlas/NMT_inblockface.nii.gz')
     blikef = ants.image_read(fluor_CONFIG['output_dir']+'/reg3D/T1wlikeB_c.nii.gz')
     if isAffine:
         t = ants.registration(b, b_, type_of_transform='Affine')
@@ -91,6 +92,7 @@ def b_invetalignMRI():
         atlas4_ = ants.apply_transforms(b, atlas4, t['fwdtransforms'], 'multiLabel')
         nmt_ = ants.apply_transforms(b, nmt, t['fwdtransforms'], 'bSpline')
         atlas6_ = ants.apply_transforms(b, atlas6, t['fwdtransforms'], 'multiLabel')
+        atlas7_ = ants.apply_transforms(b, atlas7, t['fwdtransforms'], 'multiLabel')
         blikef_ = ants.apply_transforms(b, blikef, t['fwdtransforms'], 'bSpline')
     else:
         atlas_ = ants.apply_transforms(b, atlas, [fluor_CONFIG['output_dir']+'/reg3D/xfms/b_regt1.mat'],'multiLabel',whichtoinvert=[True])
@@ -99,6 +101,7 @@ def b_invetalignMRI():
         atlas4_ = ants.apply_transforms(b, atlas4, [fluor_CONFIG['output_dir']+'/reg3D/xfms/b_regt1.mat'], 'multiLabel', whichtoinvert=[True])
         nmt_ = ants.apply_transforms(b, nmt, [fluor_CONFIG['output_dir']+'/reg3D/xfms/b_regt1.mat'], 'bSpline', whichtoinvert=[True])
         atlas6_ = ants.apply_transforms(b, atlas6, [fluor_CONFIG['output_dir']+'/reg3D/xfms/b_regt1.mat'], 'multiLabel', whichtoinvert=[True])
+        atlas7_ = ants.apply_transforms(b, atlas7, [fluor_CONFIG['output_dir'] + '/reg3D/xfms/b_regt1.mat'],'multiLabel', whichtoinvert=[True])
         blikef_ = ants.apply_transforms(b, blikef, [fluor_CONFIG['output_dir']+'/reg3D/xfms/b_regt1.mat'], 'bSpline', whichtoinvert=[True])
     atlas_.to_file(fluor_CONFIG['output_dir']+'/blockface/atlas/D99_inOriginB.nii.gz')
     atlas1_ = ants.copy_image_info(b_origin, atlas1_)
@@ -109,6 +112,7 @@ def b_invetalignMRI():
     nmt_=ants.copy_image_info(b_origin,nmt_)
     nmt_.to_file(fluor_CONFIG['output_dir']+'/blockface/atlas/TMP_inOriginB.nii.gz')
     atlas6_.to_file(fluor_CONFIG['output_dir']+'/blockface/atlas/CHARM1_inOriginB.nii.gz')
+    atlas7_.to_file(fluor_CONFIG['output_dir'] + '/blockface/atlas/segmentation_edit_inOriginB.nii.gz')
     blikef_ = ants.copy_image_info(b_origin, blikef_)
     blikef_.to_file(fluor_CONFIG['output_dir']+'/blockface/atlas/T1wlikeB_inOriginB.nii.gz')
 
@@ -130,8 +134,8 @@ def repair_blockface():
     seg[:,:,:]=seg_data
     b_rmc_repair=b_rmc-ants.mask_image(b_rmc,seg,[1,5])
     b_rmc_repair_mask = ants.get_mask(b_rmc_repair)
-    b_rmc_repair_mask=ants.morphology(b_rmc_repair_mask,'erode',2)
-    b_rmc_repair_mask = ants.morphology(b_rmc_repair_mask, 'dilate',2)
+    b_rmc_repair_mask=ants.morphology(b_rmc_repair_mask,'erode',3)
+    b_rmc_repair_mask = ants.morphology(b_rmc_repair_mask, 'dilate',3)
     b_rmc_repair = ants.mask_image(b_rmc_repair, b_rmc_repair_mask, 1)
     b_rmc_repair.to_file(fluor_CONFIG['output_dir']+'/blockface/b_recon_oc_scale_rmc_repair.nii.gz')
 

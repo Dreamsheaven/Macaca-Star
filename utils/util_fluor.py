@@ -54,7 +54,7 @@ def atlas_reg_ByT1w():
     tmp_=tf2['warpedmovout']
     tmp_ = ants.apply_transforms(tsfer, tmp_, tf3['invtransforms'], 'bSpline')
     img__ = ants.copy_image_info(tmp_origin, ants.image_clone(tmp_))
-    img__.to_file(fluor_CONFIG['output_dir']+'/reg3D/atlas/NMT_inT1likeblockface.nii.gz')
+    img__.to_file(fluor_CONFIG['output_dir']+'/reg3D/atlas/NMT_inblockface.nii.gz')
 
     ####################################################################
     atlas_ = ants.apply_transforms(t1, atlas, tf1['fwdtransforms'], 'multiLabel')
@@ -135,7 +135,7 @@ def atlas_reg_noT1w():
                             syn_metric='mattes',
                             reg_iterations=(40, 40, 40),flow_sigma=3,outprefix=fluor_CONFIG['output_dir']+'/reg3D/xfms/atlas_PItoNMT_')
     img_ = ants.copy_image_info(tmp_origin, tf1['warpedmovout'])
-    img_.to_file(fluor_CONFIG['output_dir']+'/reg3D/atlas/NMT_inT1PI.nii.gz')
+    img_.to_file(fluor_CONFIG['output_dir']+'/reg3D/atlas/NMT_inblockface.nii.gz')
     ###################################################################
 
     atlas_ = ants.apply_transforms(tsfer, atlas, tf1['fwdtransforms'], 'multiLabel')
