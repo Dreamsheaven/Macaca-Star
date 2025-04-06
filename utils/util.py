@@ -462,6 +462,7 @@ def atlas_reg_noT1w():
 
 
 def touint8(image):
+    image[image<0]=0
     image=(image - image.min()) / (image.max() - image.min()+1e-10) * 255
     image=image.astype(np.uint8)
     return image

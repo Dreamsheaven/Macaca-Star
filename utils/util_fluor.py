@@ -317,13 +317,12 @@ def centerxy_img(image):
         y=0
     return x, y
 
+def repair_mask(bf_mask,b_mask,b_seg):
+    for i in np.unique(b_mask):
+        area=b_mask[b_mask==i]
+        if len(area)<300:
+            b_mask[b_mask == i]=1
 
-def syn_toB_bySeg(b_img,b_mask,bf_img,bf_mask,b_seg,index):
-    dis=40
-    b_mask_tmp=None
-    b_clist = []
-    f_clist = []
-    matched_pairs = {}
     if len(np.unique(bf_mask))!=len(np.unique(b_mask)):
         if len(np.unique(bf_mask))==len(np.unique(b_seg)):
             b_mask_tmp=b_seg
@@ -338,11 +337,11 @@ def syn_toB_bySeg(b_img,b_mask,bf_img,bf_mask,b_seg,index):
                 bf_mask_[bf_mask != i] = 0
                 bfx, bfy = centerxy_img(bf_mask_ * 35)
                 if not (bfx == 0 and bfy == 0):
-                    if bfy>=400:
+                    if bfy>=350 and bfx>200 and bfx<300:
                         bf_mask[bf_mask==bf_mask_[bfy,bfx]]=1
                     else:
                         bf_clist.append((bfx, bfy))
-            if len(np.unique(bf_mask))> len(np.unique(b_seg)):
+            if len(np.unique(bf_mask))> len(np.unique(b_seg)) and len(np.unique(b_seg))>2:
                 bf_distances = cdist(bf_clist, bf_clist)
                 np.fill_diagonal(bf_distances, np.inf)
                 min_distance = np.min(bf_distances)
@@ -358,6 +357,13 @@ def syn_toB_bySeg(b_img,b_mask,bf_img,bf_mask,b_seg,index):
                     for i in np.unique(b_mask_tmp):
                         b_mask_tmp[b_mask_tmp == i] = n
                         n = n + 1
+            elif len(np.unique(b_seg))==2:
+                b_mask_tmp = b_seg
+                n = 1
+                for i in np.unique(b_mask_tmp):
+                    b_mask_tmp[b_mask_tmp == i] = n
+                    n = n + 1
+                bf_mask[bf_mask>1]=2
             else:
                 b_mask_tmp=b_seg
                 n = 1
@@ -370,6 +376,17 @@ def syn_toB_bySeg(b_img,b_mask,bf_img,bf_mask,b_seg,index):
             bf_mask[bf_mask>1]=2
     else:
         b_mask_tmp=b_mask
+
+    return bf_mask,b_mask_tmp
+
+def syn_toB_bySeg(b_img,b_mask,bf_img,bf_mask,b_seg,index):
+    isPlot=False
+    dis=40
+    b_clist = []
+    f_clist = []
+    matched_pairs = {}
+    bf_mask,b_mask_tmp=repair_mask(bf_mask,b_mask,b_seg)
+    plot_show(bf_mask, b_mask_tmp, isPlot)
     for i in np.unique(bf_mask):
         if i != 1:
             b_mask_ = b_mask_tmp.copy()
@@ -384,26 +401,31 @@ def syn_toB_bySeg(b_img,b_mask,bf_img,bf_mask,b_seg,index):
                 f_clist.append((fx, fy))
     b_clist = np.array(b_clist)
     f_clist = np.array(f_clist)
-    distances = cdist(f_clist,b_clist)
-    matched_f_points = {}
-    for i, f_point in enumerate(f_clist):
-        for j, b_point in enumerate(b_clist):
-            if distances[i, j] <= dis:
-                f_point_tuple = tuple(f_point)
-                if f_point_tuple not in matched_f_points or distances[i, j] < matched_f_points[f_point_tuple]:
-                    matched_pairs[f_point_tuple] = b_point
-                    matched_f_points[f_point_tuple] = distances[i, j]
-    keys=list(matched_pairs.keys())
-    label=22
-    for i in range(len(keys)):
-        # bf_mask[bf_mask==bf_mask[keys[i][1],keys[i][0]]]=label
-        # b_mask_tmp[b_mask_tmp == b_mask_tmp[matched_pairs[keys[i]][1], matched_pairs[keys[i]][0]]] = label
-        bf_mask=center_editmask(bf_mask,keys[i][0],keys[i][1],label)
-        b_mask_tmp = center_editmask(b_mask_tmp, matched_pairs[keys[i]][0], matched_pairs[keys[i]][1], label)
-        label=label+10
-    plot_show(b_mask_tmp[:, :],bf_mask, True)
+    try:
+        distances = cdist(f_clist,b_clist)
+        matched_f_points = {}
+        for i, f_point in enumerate(f_clist):
+            for j, b_point in enumerate(b_clist):
+                if distances[i, j] <= dis:
+                    f_point_tuple = tuple(f_point)
+                    if f_point_tuple not in matched_f_points or distances[i, j] < matched_f_points[f_point_tuple]:
+                        matched_pairs[f_point_tuple] = b_point
+                        matched_f_points[f_point_tuple] = distances[i, j]
+        keys=list(matched_pairs.keys())
+        label=22
+        for i in range(len(keys)):
+            bf_mask=center_editmask(bf_mask,keys[i][0],keys[i][1],label)
+            b_mask_tmp = center_editmask(b_mask_tmp, matched_pairs[keys[i]][0], matched_pairs[keys[i]][1], label)
+            label=label+10
+    except:
+        print('center match error')
+        bf_mask[bf_mask>1]=2
+        b_mask_tmp[b_mask_tmp>1]=2
+    plot_show(bf_mask,b_mask_tmp, isPlot)
     cv2.imwrite(fluor_CONFIG['output_dir']+ '/reg2D/xfms/masks/bslice_mask' + str(index) + '.tif', b_mask_tmp)
     cv2.imwrite(fluor_CONFIG['output_dir']+ '/reg2D/xfms/masks/tfslice_mask' + str(index) + '.tif', bf_mask)
+    newbf_data = reg_byimgdata(bf_img, bf_mask, b_img, b_mask_tmp,index)
+    return newbf_data
 
 
 def center_editmask(mask,x,y,value):
@@ -426,3 +448,29 @@ def center_editmask(mask,x,y,value):
     else:
         mask[mask == mask[y, x]] = value
     return mask
+
+def reg_byimgdata(bf_img, bf_mask, b_img, b_mask,index):
+    newbf_data=np.zeros_like(b_mask)
+    bf_img_data=bf_img.numpy()
+    b_img_data = b_img.numpy()
+    for i in np.unique(bf_mask):
+        if i !=1:
+            bf_img_data_=bf_img_data.copy()
+            b_img_data_ = b_img_data.copy()
+            bf_img_data_[bf_mask != i] = 0
+            b_img_data_[b_mask != i] = 0
+            bf_slice = ants.from_numpy(bf_img_data_)
+            b_slice = ants.from_numpy(b_img_data_)
+            try:
+                result = ants.registration(b_slice, bf_slice, 'SyNRA', syn_metric='mattes', aff_metric='GC',
+                                           aff_sampling=200, aff_iterations=(2100, 2100, 2100, 2100),
+                                           reg_iterations=(400, 400, 400), flow_sigma=2,
+                                           outprefix=fluor_CONFIG['output_dir']+ '/reg2D/xfms/ftob_affine_iter2_' + str(
+                                               index) + '_part' + str(i) + '_')
+
+                bf_slice_ = ants.apply_transforms(b_slice, bf_slice, result['fwdtransforms'],'linear')
+                newbf_data = newbf_data + bf_slice_.numpy().copy()
+            except:
+                print('reg error')
+                newbf_data = bf_slice.numpy().copy()
+    return newbf_data

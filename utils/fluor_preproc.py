@@ -65,25 +65,25 @@ def repaire_blikefluo():
 
 
 def fluor_SyNtoB_bySeg():
-    isPlot=True
-    # viz = Visdom(env='slice2D_fluo_affinetoB')
+    isPlot=False
+    viz = Visdom(env='slice2D_fluo_affinetoB')
     b = ants.image_read(fluor_CONFIG['output_dir']+'/blockface/b_recon_oc_scale_rmc_repair.nii.gz')
     tf = ants.image_read(fluor_CONFIG['output_dir']+ '/fluor/blikef_repair2D_aug.nii.gz')
     b_seg = ants.image_read(fluor_CONFIG['output_dir'] + '/blockface/atlas/segmentation_edit_inOriginB_.nii.gz')
     tf_=ants.new_image_like(tf,tf.numpy())
     tf_[:, :, :] = 0
-    # for index in range(0, tf.shape[1]):
-    for index in range(58,59):
+    for index in range(0, tf.shape[1]):
+    # for index in range(165,166):
         print(index)
         tf_[:,index,:]=0
-        bslice = touint8(b.numpy()[:, index, :])
-        tfslice = touint8(tf.numpy()[:, index, :])
+        bslice = touint8(b.numpy()[:, index, :].copy())
+        tfslice = touint8(tf.numpy()[:, index, :].copy())
         bslice = np.rot90(bslice).copy()
         tfslice = np.rot90(tfslice).copy()
         bsliceimg = ants.from_numpy(bslice)
         tfsliceimg = ants.from_numpy(tfslice)
         result1 = ants.registration(bsliceimg, tfsliceimg, 'Similarity', aff_metric='GC',outprefix=fluor_CONFIG['output_dir']+ '/reg2D/xfms/ftob_affine_iter1_'+str(index)+'_')
-        tfsliceimg = ants.apply_transforms(bsliceimg, tfsliceimg, result1['fwdtransforms'],'bSpline')
+        tfsliceimg = ants.apply_transforms(bsliceimg, tfsliceimg, result1['fwdtransforms'],'linear')
         tfslice = tfsliceimg.numpy().copy()
         bmask = bslice.copy()
         tfmask = tfslice.copy()
@@ -93,8 +93,12 @@ def fluor_SyNtoB_bySeg():
         tfslice_mask = get_maskBywatershed(tfmask)
         bslice_mask[bslice_mask == 0] = 1
         tfslice_mask[tfslice_mask == 0] = 1
-        plot_show(bslice_mask,tfslice_mask,isPlot)
-        syn_toB_bySeg(bsliceimg,bslice_mask,tfsliceimg,tfslice_mask,np.rot90(b_seg[:,index,:].numpy()),index)
+        plot_show(tfslice_mask, bslice_mask, isPlot)
+        newbf_data=syn_toB_bySeg(bsliceimg,bslice_mask,tfsliceimg,tfslice_mask,np.rot90(b_seg[:,index,:].numpy()),index)
+        tf_[:, index, :]=np.rot90(newbf_data.copy(),3)
+        viz.image(newbf_data[:, :], win='1')
+        viz.image(bslice[:, :], win='2')
+    tf_.to_file(fluor_CONFIG['output_dir']+ '/reg2D/blikef_affine.nii.gz')
 
 
 
