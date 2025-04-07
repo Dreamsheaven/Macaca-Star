@@ -420,7 +420,7 @@ def repair_mask(bf_mask,b_mask,b_seg):
     return bf_mask,b_mask_tmp
 
 def syn_toB_bySeg(b_img,b_mask,bf_img,bf_mask,b_seg,index):
-    isPlot=True
+    isPlot=False
     dis=fluor_CONFIG['max_dis_centers']
     b_clist = []
     f_clist = []
