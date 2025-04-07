@@ -72,8 +72,8 @@ def fluor_SyNtoB_bySeg():
     b_seg = ants.image_read(fluor_CONFIG['output_dir'] + '/blockface/atlas/segmentation_edit_inOriginB_.nii.gz')
     tf_=ants.new_image_like(tf,tf.numpy())
     tf_[:, :, :] = 0
-    # for index in range(0, tf.shape[1]):
-    for index in range(59,60):
+    for index in range(0, tf.shape[1]):
+    # for index in range(59,60):
         print(index)
         tf_[:,index,:]=0
         bslice = touint8(b.numpy()[:, index, :].copy())
