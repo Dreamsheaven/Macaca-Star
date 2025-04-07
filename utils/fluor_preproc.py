@@ -72,8 +72,8 @@ def fluor_SyNtoB_bySeg():
     b_seg = ants.image_read(fluor_CONFIG['output_dir'] + '/blockface/atlas/segmentation_edit_inOriginB_.nii.gz')
     tf_=ants.new_image_like(tf,tf.numpy())
     tf_[:, :, :] = 0
-    for index in range(0, tf.shape[1]):
-    # for index in range(165,166):
+    # for index in range(0, tf.shape[1]):
+    for index in range(59,60):
         print(index)
         tf_[:,index,:]=0
         bslice = touint8(b.numpy()[:, index, :].copy())
@@ -96,8 +96,9 @@ def fluor_SyNtoB_bySeg():
         plot_show(tfslice_mask, bslice_mask, isPlot)
         newbf_data=syn_toB_bySeg(bsliceimg,bslice_mask,tfsliceimg,tfslice_mask,np.rot90(b_seg[:,index,:].numpy()),index)
         tf_[:, index, :]=np.rot90(newbf_data.copy(),3)
-        viz.image(newbf_data[:, :], win='1')
-        viz.image(bslice[:, :], win='2')
+        viz.image(bslice[:, :], win='1')
+        viz.image(newbf_data[:, :], win='2')
+        viz.image(np.rot90(touint8(tf.numpy()[:, index, :].copy())), win='3')
     tf_.to_file(fluor_CONFIG['output_dir']+ '/reg2D/blikef_affine.nii.gz')
 
 

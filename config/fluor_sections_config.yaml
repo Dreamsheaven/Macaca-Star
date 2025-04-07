@@ -1,2 +1,5 @@
 subject_dir: "example/fluor_sections/fluor.nii.gz"
 output_dir: 'example/fluor_sections'
+max_dis_centers: 45  # The maximum distance between the center points of corresponding tissues in fluorescence and blockface imaging.
+ex_min_blikef_area: 100 # The minimum tissue area removed in fluorescent sections.
+ex_min_b_area: 300 # The minimum tissue area removed in blockface sections.
