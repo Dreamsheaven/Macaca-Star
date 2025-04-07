@@ -27,8 +27,7 @@ MRI_CONFIG = yaml.safe_load(open(MRI_YAML_PATH, 'r'))
 
 
 def atlas_reg_ByT1w():
-    # t1 = ants.image_read(MRI_CONFIG['MRI_file'])
-    t1=ants.image_read('example/fluor_sections/MRI.nii.gz')
+    t1=ants.image_read(MRI_CONFIG['MRI_file']+'/MRI/MRI_brain_bc_dn_.nii.gz')
     tsfer = ants.image_read(fluor_CONFIG['output_dir']+'/reg3D/T1wlikeB_c.nii.gz')
     blockface=ants.image_read(fluor_CONFIG['output_dir']+'/reg3D/b_recon_oc_scale_alignMRI.nii.gz')
     tmp_origin = ants.image_read('template/NMT/NMT_brain/NMT_v2.0_sym_SS.nii.gz')
