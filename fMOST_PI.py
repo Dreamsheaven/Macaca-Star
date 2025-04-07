@@ -8,7 +8,7 @@ from utils.check_file_structure import check_file_structure
 def main():
     logger=loggerz.get_logger()
     logger.info('Macaca-Star pipeline start')
-    MRI_preproc()
+    MRI_preproc(0)
     PI_preproc()
 
 

@@ -41,6 +41,8 @@ def check_file_structure(type):
             error = True
         if not os.path.exists(fluor_config['output_dir']):
             os.mkdir(fluor_config['output_dir'])
+        if not os.path.exists(fluor_config['output_dir']+'/MRI'):
+            os.mkdir(fluor_config['output_dir']+'/MRI')
         if not os.path.exists(fluor_config['output_dir']+'/blockface'):
             os.mkdir(fluor_config['output_dir']+'/blockface')
         if not os.path.exists(fluor_config['output_dir']+'/reg3D'):
