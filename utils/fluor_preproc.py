@@ -65,7 +65,7 @@ def repaire_blikefluo():
 
 
 def fluor_SyNtoB_bySeg():
-    isPlot=True
+    isPlot=False
     viz = Visdom(env='slice2D_fluo_affinetoB')
     b = ants.image_read(fluor_CONFIG['output_dir']+'/blockface/b_recon_oc_scale_rmc_repair.nii.gz')
     tf = ants.image_read(fluor_CONFIG['output_dir']+ '/fluor/blikef_repair2D_aug.nii.gz')
@@ -99,7 +99,7 @@ def fluor_SyNtoB_bySeg():
         viz.image(bslice[:, :], win='1')
         viz.image(newbf_data[:, :], win='2')
         viz.image(np.rot90(touint8(tf.numpy()[:, index, :].copy())), win='3')
-    tf_.to_file(fluor_CONFIG['output_dir']+ '/reg2D/blikef_affine.nii.gz')
+    tf_.to_file(fluor_CONFIG['output_dir']+ '/reg2D/blikef_SyNtoB_iter1.nii.gz')
 
 
 
