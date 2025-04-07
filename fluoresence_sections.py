@@ -10,7 +10,7 @@ def main():
     logger=loggerz.get_logger()
     logger.info('Macaca-Star pipeline start')
     # MRI_preproc()
-    # blockface_preproc()
+    blockface_preproc()
     fluor_preproc()
 
 

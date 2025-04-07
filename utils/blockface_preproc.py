@@ -1,13 +1,12 @@
 import os
 import shutil
-
 import albumentations as A
 import ants
+import numpy as np
 import utils.Logger as loggerz
 from utils.util import touint8
 import yaml
-
-from utils.util_fluor import atlas_reg_ByT1w, atlas_reg_noT1w
+from utils.util_fluor import atlas_reg_ByT1w, atlas_reg_noT1w, get_maskBywatershed, centerxy_img
 
 blockface_YAML_PATH = os.getcwd() + '/config/blockface_config.yaml'
 blockface_CONFIG = yaml.safe_load(open(blockface_YAML_PATH, 'r'))
@@ -119,6 +118,8 @@ def b_invetalignMRI():
 
 
 def repair_blockface():
+    logger = loggerz.get_logger()
+    logger.info('repair blockface with segmentation')
     b=ants.image_read(fluor_CONFIG['output_dir']+'/blockface/b_recon_oc_scale_clahe.nii.gz')
     seg = ants.image_read(fluor_CONFIG['output_dir']+'/blockface/atlas/segmentation_inOriginB.nii.gz')
     cere_mask = ants.image_read(fluor_CONFIG['output_dir']+'/blockface/atlas/cerebellum_mask_inOriginB.nii.gz')
@@ -138,3 +139,100 @@ def repair_blockface():
     b_rmc_repair = ants.mask_image(b_rmc_repair, b_rmc_repair_mask, 1)
     b_rmc_repair.to_file(fluor_CONFIG['output_dir']+'/blockface/b_recon_oc_scale_rmc_repair.nii.gz')
 
+def repair_seg_inBlockface():
+    img = ants.image_read(fluor_CONFIG['output_dir'] + '/blockface/atlas/segmentation_edit_inOriginB.nii.gz')
+    b=ants.image_read(fluor_CONFIG['output_dir']+'/blockface/b_recon_oc_scale_rmc_repair.nii.gz')
+    mask=ants.get_mask(b)
+    img=ants.copy_image_info(b,img)
+    img_=ants.mask_image(img,mask)
+    img_data=img_.numpy()
+    index=None
+    for i in range(img.shape[1]-1,0,-1):
+        slice=img_data[:,i,:]
+        if set(np.unique(slice).astype(int)) == {0,160, 210, 100}:
+            print(i)
+            index=i
+            print(np.unique(slice).astype(int))
+            break
+    for ii in range(index,img.shape[1]):
+        slice = img_data[:, ii, :]
+        if 160 in np.unique(slice).astype(int) and 210 in np.unique(slice).astype(int):
+            remaining_values = np.setdiff1d(np.unique(slice).astype(int), np.array([0,160, 210, 100]))
+            print(remaining_values)
+            tmp=img_data[:, ii, :]
+            tmp[tmp==150]=100
+            tmp[tmp == 200] = 100
+    index=None
+    for i in range(img.shape[1]-1,0,-1):
+        slice=img_data[:,i,:]
+        if set(np.unique(slice).astype(int)) == {0,2}:
+            print(i)
+            index=i
+            print(np.unique(slice).astype(int))
+            break
+    for ii in range(index,img.shape[1]):
+        slice = img_data[:, ii, :]
+        if 2 in np.unique(slice).astype(int) :
+            remaining_values = np.setdiff1d(np.unique(slice).astype(int), np.array([0,2]))
+            print(remaining_values)
+            tmp=img_data[:, ii, :]
+            for t in remaining_values:
+                tmp[tmp==t]=2
+    index=None
+    for i in range(0,img.shape[1]):
+        slice=img_data[:,i,:]
+        if set(np.unique(slice).astype(int)) == {0,2}:
+            print(i)
+            index=i
+            print(np.unique(slice).astype(int))
+            break
+    for ii in range(index,0,-1):
+        slice = img_data[:, ii, :]
+        if 2 in np.unique(slice).astype(int) :
+            remaining_values = np.setdiff1d(np.unique(slice).astype(int), np.array([0,2]))
+            print(remaining_values)
+            tmp=img_data[:, ii, :]
+            for t in remaining_values:
+                tmp[tmp==t]=2
+    index = None
+    for i in range(0, img.shape[1]):
+        slice = img_data[:, i, :]
+        if set(np.unique(slice).astype(int)) == {0, 2}:
+            print(i)
+            index = i
+            print(np.unique(slice).astype(int))
+            break
+    count = 0
+    for ii in range(index - 1, 0, -1):
+        slice_origin = np.rot90(img_data[:, ii, :].copy()).copy()
+        slice = slice_origin.copy()
+        slice[slice > 0] = 100
+        slice = touint8(slice)
+        w = get_maskBywatershed(slice)
+        for i in np.unique(w):
+            area = w[w == i]
+            if len(area) < 300:
+                w[w == i] = 1
+        # plot_show(slice[:, :], w, True)
+        c_list = []
+        for iii in np.unique(w):
+            if iii != 1:
+                w_ = w.copy()
+                w_[w != iii] = 0
+                sx, sy = centerxy_img(w_ * 35)
+                if not (sx == 0 and sy == 0):
+                    c_list.append((sx, sy))
+        if len(c_list) == 3:
+            max_y_point = max(c_list, key=lambda point: point[1])
+            w[w != w[max_y_point[1], max_y_point[0]]] = 0
+            w[w > 0] = 1
+            slice_ = slice * w
+            slice_[slice_ > 0] = 88
+            img_data[:, ii, :] = np.rot90(slice_origin - slice_origin * w + slice_, 3).copy()
+        else:
+            count = count + 1
+        if count > 10:
+            break
+
+    img[:, :, :] = img_data
+    img.to_file(fluor_CONFIG['output_dir']+'/blockface/atlas/segmentation_edit_inOriginB_.nii.gz')
