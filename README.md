@@ -58,7 +58,7 @@ If you opt for the MRI-guided approach, please also configure the [MRI_config.ya
 
 **All atlas results generated through Macaca-Star registration are saved in the atlas folder.**
 
-Registration results can be visualized using Visdom:
+**Registration results can be visualized using Visdom:**
 ```Bash
 python -m visdom.server
 or
