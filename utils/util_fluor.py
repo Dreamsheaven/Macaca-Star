@@ -326,10 +326,11 @@ def repair_mask(bf_mask,b_mask,b_seg):
         if len(area)<fluor_CONFIG['ex_min_b_area']:
             b_mask[b_mask == i]=1
     b_seg=get_maskBywatershed(touint8(b_seg*35))
+    b_seg[b_seg<=1]=0
     for i in np.unique(b_seg):
         area=b_seg[b_seg==i]
         if len(area)<fluor_CONFIG['ex_min_b_area']:
-            b_seg[b_seg == i]=1
+            b_seg[b_seg == i]=0
 
     if len(np.unique(bf_mask))!=len(np.unique(b_mask)):
         if len(np.unique(bf_mask))==len(np.unique(b_seg)):
@@ -340,16 +341,40 @@ def repair_mask(bf_mask,b_mask,b_seg):
                 n=n+1
         elif len(np.unique(bf_mask))> len(np.unique(b_seg)):
             bf_clist = []
+            b_clist = []
+            bf_flag=[]
+            f_flag=[]
             for i in np.unique(bf_mask):
-                bf_mask_ = bf_mask.copy()
-                bf_mask_[bf_mask != i] = 0
-                bfx, bfy = centerxy_img(bf_mask_ * 35)
-                if not (bfx == 0 and bfy == 0):
-                    if bfy>=350 and bfx>200 and bfx<300:
-                        # bf_mask[bf_mask==bf_mask[bfy,bfx]]=1
-                        bf_mask=center_editmask(bf_mask, bfx, bfy, 1)
-                    else:
-                        bf_clist.append((bfx, bfy))
+                if i !=1:
+                    bf_mask_ = bf_mask.copy()
+                    bf_mask_[bf_mask != i] = 0
+                    bfx, bfy = centerxy_img(bf_mask_ * 35)
+                    if not (bfx == 0 and bfy == 0):
+                        if bfy>=350 and bfx>200 and bfx<300:
+                            # bf_mask=center_editmask(bf_mask, bfx, bfy, 1)
+                            bf_flag.append((bfx, bfy))
+                        else:
+                            bf_clist.append((bfx, bfy))
+
+            for i in np.unique(b_seg):
+                if i !=0:
+                    b_seg_ = b_seg.copy()
+                    b_seg_[b_seg != i] = 0
+                    bx, by = centerxy_img(b_seg_ * 35)
+                    if not (bfx == 0 and bfy == 0):
+                        if by>=350 and bx>200 and bx<300:
+                            # b_mask=center_editmask(bf_mask, bx, by, 1)
+                            f_flag.append((bfx, bfy))
+                        else:
+                            b_clist.append((bfx, bfy))
+            if len(f_flag)==len(bf_flag) and len(f_flag)>=1 and len(bf_clist)==2:
+                if bf_clist[0][1]+10>bf_clist[1][1] and bf_clist[0][1]-10<bf_clist[1][1]:
+                    bf_mask = center_editmask(bf_mask, bf_clist[0][0], bf_clist[0][1], 6)
+                    bf_mask = center_editmask(bf_mask, bf_clist[1][0], bf_clist[1][1], 6)
+                    n = 1
+                    for i in np.unique(bf_mask):
+                        bf_mask[bf_mask == i] = n
+                        n = n + 1
             if len(np.unique(bf_mask))> len(np.unique(b_seg)) and len(np.unique(b_seg))>2:
                 bf_distances = cdist(bf_clist, bf_clist)
                 np.fill_diagonal(bf_distances, np.inf)
