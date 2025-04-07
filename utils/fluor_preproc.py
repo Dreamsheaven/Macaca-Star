@@ -65,15 +65,15 @@ def repaire_blikefluo():
 
 
 def fluor_SyNtoB_bySeg():
-    isPlot=False
+    isPlot=True
     viz = Visdom(env='slice2D_fluo_affinetoB')
     b = ants.image_read(fluor_CONFIG['output_dir']+'/blockface/b_recon_oc_scale_rmc_repair.nii.gz')
     tf = ants.image_read(fluor_CONFIG['output_dir']+ '/fluor/blikef_repair2D_aug.nii.gz')
     b_seg = ants.image_read(fluor_CONFIG['output_dir'] + '/blockface/atlas/segmentation_edit_inOriginB_.nii.gz')
     tf_=ants.new_image_like(tf,tf.numpy())
     tf_[:, :, :] = 0
-    for index in range(0, tf.shape[1]):
-    # for index in range(89,90):
+    # for index in range(0, tf.shape[1]):
+    for index in range(57,58):
         print(index)
         tf_[:,index,:]=0
         bslice = touint8(b.numpy()[:, index, :].copy())

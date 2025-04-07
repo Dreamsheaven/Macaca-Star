@@ -343,7 +343,7 @@ def repair_mask(bf_mask,b_mask,b_seg):
             bf_clist = []
             b_clist = []
             bf_flag=[]
-            f_flag=[]
+            b_flag=[]
             for i in np.unique(bf_mask):
                 if i !=1:
                     bf_mask_ = bf_mask.copy()
@@ -364,10 +364,10 @@ def repair_mask(bf_mask,b_mask,b_seg):
                     if not (bfx == 0 and bfy == 0):
                         if by>=350 and bx>200 and bx<300:
                             # b_mask=center_editmask(bf_mask, bx, by, 1)
-                            f_flag.append((bfx, bfy))
+                            b_flag.append((bfx, bfy))
                         else:
                             b_clist.append((bfx, bfy))
-            if len(f_flag)==len(bf_flag) and len(f_flag)>=1 and len(bf_clist)==2:
+            if len(b_flag)==len(bf_flag) and len(b_flag)>=1 and len(bf_clist)==2:
                 if bf_clist[0][1]+10>bf_clist[1][1] and bf_clist[0][1]-10<bf_clist[1][1]:
                     bf_mask = center_editmask(bf_mask, bf_clist[0][0], bf_clist[0][1], 6)
                     bf_mask = center_editmask(bf_mask, bf_clist[1][0], bf_clist[1][1], 6)
@@ -375,6 +375,8 @@ def repair_mask(bf_mask,b_mask,b_seg):
                     for i in np.unique(bf_mask):
                         bf_mask[bf_mask == i] = n
                         n = n + 1
+            elif  len(bf_flag)==1 and len(b_flag)==0:
+                bf_mask = center_editmask(bf_mask, bf_flag[0][0], bf_flag[0][1], 1)
             if len(np.unique(bf_mask))> len(np.unique(b_seg)) and len(np.unique(b_seg))>2:
                 bf_distances = cdist(bf_clist, bf_clist)
                 np.fill_diagonal(bf_distances, np.inf)
@@ -418,7 +420,7 @@ def repair_mask(bf_mask,b_mask,b_seg):
     return bf_mask,b_mask_tmp
 
 def syn_toB_bySeg(b_img,b_mask,bf_img,bf_mask,b_seg,index):
-    isPlot=False
+    isPlot=True
     dis=fluor_CONFIG['max_dis_centers']
     b_clist = []
     f_clist = []
